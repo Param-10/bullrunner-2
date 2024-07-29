@@ -39,7 +39,16 @@
                     lat: 28.05867,
                     lng: -82.41378
                 }, // Start at (0,0) - will be overwritten
-                zoom: 10
+                zoom: 10,
+                restriction: {
+                    latLngBounds: {
+                        north: 28.2,
+                        south: 27.9,
+                        east: -82.3,
+                        west: -82.5
+                    },
+                    strictBounds: true
+                }
             });
 
             // Create a button for panning to the user's current location
