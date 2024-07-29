@@ -297,7 +297,7 @@ async function setBusesFirst(what) {
                 this.setBuses.call(this, JSON.parse(data));
                 updateBuses.call(this);
             }.bind(this)).fail(failure.bind(this));
-    }, 5000);
+    }, 10000);
     //setInterval.call(this, cleanup.bind(this), 10000);
 }
 
