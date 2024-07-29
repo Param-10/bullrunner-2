@@ -4,8 +4,8 @@ var stops;
 var buses;
 var alerts;
 
-var excludeList = ['cam', 'ccexp', 'connect', 'penn', 'pennexpr']
-var excludeMyIDs = ['41231', '4088', '4063', '4056', '4098']
+var excludeList = ['Purple Express'];
+var excludeMyIDs = ['42408'];
 var routeItem = "popupItem route";
 var busItem = "popupItem bus"
 var stopItem = "popupItem stop"
