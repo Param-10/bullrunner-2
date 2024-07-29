@@ -688,7 +688,9 @@ function loadStops() {
             delete stopsReal[stop];
         }
     }
-
+    for (let stopName of this.stopsOrdered) {
+        renderCircle(this.stopsReal[stopName].routes, stopName);
+    }
     this.stopsLoaded = true;
 }
 
