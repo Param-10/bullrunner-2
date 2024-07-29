@@ -36,19 +36,10 @@
             // Initialize the Google Map
             map = new google.maps.Map(document.getElementById('map'), {
                 center: {
-                    lat: 28.06485,
-                    lng: -82.413840
-                },
-                zoom: 10,
-                restriction: {
-                    latLngBounds: {
-                        north: 28.2,
-                        south: 27.9,
-                        east: -82.3,
-                        west: -82.5
-                    },
-                    strictBounds: true
-                }
+                    lat: 0,
+                    lng: 0
+                }, // Start at (0,0) - will be overwritten
+                zoom: 10
             });
 
             // Create a button for panning to the user's current location
