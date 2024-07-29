@@ -298,7 +298,7 @@ async function setBusesFirst(what) {
                 updateBuses.call(this);
             }.bind(this)).fail(failure.bind(this));
     }, 10000);
-    //setInterval.call(this, cleanup.bind(this), 10000);
+    setInterval.call(this, cleanup.bind(this), 10000);
 }
 
 function cleanup() {
