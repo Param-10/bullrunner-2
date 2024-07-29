@@ -1,184 +1,193 @@
-:root {
-    --usf-green: #006747;
-    --usf-gold: #CFC493;
-    --white: #FFFFFF;
-}
-
+html,
 body {
-    background-color: var(--usf-green);
-    margin: 0;
-    font-family: 'Open Sans', sans-serif;
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: black;
+    font-family: 'Open Sans';
     font-weight: bold;
-    font-size: 16px;
 }
 
 #logo {
-    background-color: var(--usf-gold);
-    position: fixed;
-    top: 0;
-    left: 0;
+    display: none;
+    background-color: gold;
+    position: absolute;
+    top: 0px;
+    left: 0px;
     width: 100%;
-    height: 50px;
-    font-size: 1.2rem;
-    color: var(--usf-green);
-    padding: 10px;
-    box-sizing: border-box;
-    z-index: 1000;
+    height: 3.7vh;
+    font-size: 2vh;
+    color: green;
+    padding-top: calc(1.3vh + 4px);
+    padding-left: 1.3vh;
 }
 
 #controls {
     background-color: rgba(255, 255, 255, 0.5);
-    position: fixed;
+    position: absolute;
     top: 0px;
-    right: 1vw;
-    transform: translateX(-50%);
-    width: 20vh;
-    height: calc(5%-3px);
-    border-radius: 25px;
+    left: calc(2.5% - 2px);
+    width: 95%;
+    height: 5vh;
+    border-radius: 10px;
     display: flex;
-    justify-content: space-around;
-    align-items: center;
-    border: 2px solid var(--usf-gold);
-    z-index: 1000;
+    flex-direction: row;
+    border-width: 2px;
+    border-color: green;
+    border-style: solid;
 }
 
 .SVGcontainer {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    height: 100%;
+    width: 25%;
 }
 
 .SVGcontainer:hover {
-    background-color: var(--usf-gold);
+    background-color: gold;
 }
 
 .SVGicon {
-    width: 24px;
-    height: 24px;
+    height: 80%;
+    width: 100%;
+    margin: 4%;
 }
 
 .popup {
-    position: fixed;
-    top: 60px;
-    left: 5%;
-    width: 90%;
-    max-height: calc(100vh - 120px);
-    background-color: var(--usf-green);
+    position: absolute;
+    top: 10vh;
+    width: 100vw;
+    min-height: 10vh;
+    max-height: 90vh;
+    background-color: green;
     border-radius: 10px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    border: 2px solid var(--usf-gold);
 }
 
 .popupList {
     overflow-y: auto;
     flex-grow: 1;
-    padding: 10px;
 }
 
 .popupTitle {
-    font-size: 1.5rem;
+    font-size: 4vh;
     text-align: center;
-    color: var(--usf-gold);
-    margin: 10px 0;
-    flex-shrink: 0;
+    color: gold;
+    margin: 1%;
+    flex-grow: 0;
 }
 
 .popupItem {
     position: relative;
-    border: 1px solid var(--usf-gold);
-    border-left-width: 5px;
-    color: var(--white);
-    padding: 10px;
-    font-size: 1rem;
-    margin: 5px 0;
-    border-radius: 8px;
+    border: 0.05em;
+    border-left: 0.3em;
+    border-style: solid;
+    color: white;
+    padding: 5%;
+    font-size: 3vh;
+    margin: 0.1em;
+    border-radius: 16px;
 }
 
 .popupItem:hover {
-    background-color: rgba(207, 196, 147, 0.3);
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.popupItem.stop,
+.popupItem.alert {
+    padding: 1%;
+    border-color: gold;
 }
 
 .x {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    font-size: 1.5rem;
-    color: var(--usf-gold);
-    width: 30px;
-    height: 30px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    top: 0.25em;
+    right: 0.25em;
+    font-size: 4vh;
+    color: gold;
+    height: 1.5em;
+    aspect-ratio: 1/1;
+}
+
+.routeSelector {
+    position: absolute;
+    right: 1%;
+    top: 1em;
+    left: calc(99% - width);
+    height: 5vh;
+    border: 0.05em;
+    aspect-ratio: 1/1;
+    border-radius: 16px;
+    border-color: gold;
+    border-style: solid;
+    background-color: green;
+}
+
+li {
+    border: 0.05em;
+    border-left: 0.3em;
+    border-style: solid;
+    color: white;
+    padding: 5%;
+    font-size: 3vh;
+    margin: 0.1em;
+    margin-right: 2em;
+    border-radius: 16px;
+    background-color: green;
+}
+
+li:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.popupItem.bus {
+    margin: 0.03em;
 }
 
 input {
-    border: 1px solid var(--usf-gold);
-    color: var(--usf-green);
-    padding: 10px;
-    font-size: 1rem;
-    margin: 5px 0;
-    border-radius: 8px;
-    width: calc(100% - 20px);
-    background-color: var(--white);
+    border: 0.05em;
+    border-style: solid;
+    color: black;
+    padding: 2%;
+    font-size: 3vh;
+    margin: 0.1em;
+    border-radius: 16px;
 }
 
 .busDetail {
-    position: fixed;
-    background-color: var(--usf-green);
+    all: revert;
+    position: absolute;
+    background-color: green;
     border-radius: 10px;
-    width: 90%;
-    left: 5%;
-    bottom: 70px;
+    aspect-ratio: 3/1;
+    width: auto;
     box-sizing: border-box;
-    border: 2px solid var(--usf-gold);
-    padding: 10px;
 }
 
 .busDetail>h4 {
-    font-size: 1.2rem;
-    color: var(--usf-gold);
+    font-size: 2em;
+    color: gold;
     text-align: center;
-    margin: 5px 0;
+    white-space: nowrap;
+    margin-top: 5%;
+    margin-bottom: 5%;
+    padding: 15;
 }
 
 .busDetail>ul {
-    color: var(--white);
-    padding: 0 20px;
-    margin: 5px 0;
+    all: revert;
+    color: gold;
+    white-space: nowrap;
+    padding-right: 50;
+    padding-bottom: 10;
 }
 
 .busDetail>ul>li {
-    color: var(--white);
-    margin: 5px 0;
-}
-
-@media (max-width: 600px) {
-    body {
-        font-size: 14px;
-    }
-    #logo {
-        height: 40px;
-        font-size: 1rem;
-    }
-    .popup {
-        top: 50px;
-        max-height: calc(100vh - 100px);
-    }
-    .popupTitle {
-        font-size: 1.2rem;
-    }
-    .popupItem {
-        font-size: 0.9rem;
-    }
-    input {
-        font-size: 0.9rem;
-    }
-    .busDetail>h4 {
-        font-size: 1rem;
-    }
+    all: revert;
+    color: gold;
+    white-space: nowrap;
 }
