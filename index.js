@@ -4,7 +4,7 @@ var stops;
 var buses;
 var alerts;
 
-var excludeList = ['Blue Event Detour', 'Orange Event Detour', 'Red Event Detour', 'penn', 'pennexpr']
+var excludeList = ['Blue Event Detour', 'Orange Event Detour', 'Red Event Detour']
 var excludeMyIDs = ['36235', '42408', '42980', '43015', '45753', '43017']
 var routeItem = "popupItem route";
 var busItem = "popupItem bus"
