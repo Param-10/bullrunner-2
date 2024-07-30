@@ -936,8 +936,18 @@ function showStopDetails(stopName) {
 function showStopOnMap(stopName) {
     $("#stopsList").hide();
     $("#routesList").hide();
-    map.setCenter([this.stopsReal[stopName].long, this.stopsReal[stopName].lat])
-    map.setZoom(16);
+
+    // Log the stopName and this.stopsReal[stopName]
+    console.log("stopName:", stopName);
+    console.log("this.stopsReal[stopName]:", this.stopsReal[stopName]);
+
+    // Check if this.stopsReal[stopName] is defined
+    if (this.stopsReal[stopName]) {
+        map.setCenter([this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
+        map.setZoom(16);
+    } else {
+        console.error("Stop not found:", stopName);
+    }
 }
 
 function filterBuses(bus) {
