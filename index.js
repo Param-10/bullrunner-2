@@ -66,16 +66,26 @@ async function initialise() {
             setRoutes(JSON.parse(data));
             loadRoutes();
         }.bind(this)).fail(failure.bind(this));
-    await $.post("https://passio3.com/www/mapGetData.php?getStops=1&deviceId=" + deviceId + "&wTransloc=1", { json: '{"s0":"2343","sA":1}' },
+    await $.post(
+        "https://passio3.com/www/mapGetData.php?getStops=1&deviceId=" + deviceId + "&wTransloc=1", { json: '{"s0":"2343","sA":1}' },
         function(data) {
             if (Object.keys(JSON.parse(data)).length === 1) {
                 this.errorMessage = "Passio servers dead, ggwp :(";
-                document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
+                document.getElementById('status').innerHTML = `
+                  <h3 class="popupTitle">Something Went Wrong</h3>
+                  </br>
+                  <div class="popupItem">
+                    <h3>From Passio Official</h3>
+                    </br>
+                    "${JSON.parse(data)['error']}"
+                  </div>
+                `;
                 throw new Error("Passio Gone");
             }
             setStops(JSON.parse(data));
             loadStops();
-        }.bind(this)).fail(failure.bind(this));
+        }.bind(this)
+    ).fail(failure.bind(this));
     await $.post("https://passio3.com/www/goServices.php?getAlertMessages=1&deviceId=" + deviceId, { json: '{"systemSelected0":"2343", "amount":1}' },
         function(data) {
             if (Object.keys(JSON.parse(data)).length === 1) {
@@ -206,7 +216,7 @@ async function setBusesFirst(what) {
         }
         this.stopsOrdered = Object.keys(this.stopsReal);
         this.stopsOrdered.sort();
-        
+
         if (map.loaded()) {
             for (var stoppe of this.stopsOrdered) {
                 this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
@@ -220,7 +230,7 @@ async function setBusesFirst(what) {
                 checkStopMarkersInView();
             });
         }
-        
+
         stopsHaveBuses = true;
     }
 
@@ -612,7 +622,7 @@ function loadRoutes() {
 
 function loadStops() {
     console.log("Starting loadStops function");
-    
+
     // Process routes
     var keys = Object.keys(this.stops['routes']);
     for (var i = 0; i < keys.length; i++) {
@@ -885,16 +895,16 @@ function updateBusVisibility() {
     }
 }
 
-    // this.currentRoutes = Object.keys(this.selectedRoutes);
-    // for(var rout of this.currentRoutes){
-    //     for(var cord = 0; cord<this.routesReal[rout].coords.length; cord++){
-    //         var dov = document.createElement('div');
-    //         dov.innerText = cord;
-    //         dov.id = cord;
-    //         new mapboxgl.Marker(dov).setLngLat(this.routesReal[rout].coords[cord]).addTo(map)
-    //         console.log(dov);
-    //     }
-    // }
+// this.currentRoutes = Object.keys(this.selectedRoutes);
+// for(var rout of this.currentRoutes){
+//     for(var cord = 0; cord<this.routesReal[rout].coords.length; cord++){
+//         var dov = document.createElement('div');
+//         dov.innerText = cord;
+//         dov.id = cord;
+//         new mapboxgl.Marker(dov).setLngLat(this.routesReal[rout].coords[cord]).addTo(map)
+//         console.log(dov);
+//     }
+// }
 
 
 const ratio = 2;
@@ -915,9 +925,9 @@ function fixSizes() {
     }
     for (var marker of document.querySelectorAll('.stopMarker')) {
         for (var svug of marker.childNodes) {
-          marker.setAttribute('style', `height: ${(zoomb * ratio * 2).toString()}px; width: ${(zoomb * ratio * 2).toString()}px;`)
-          $(svug).attr('height', (zoomb * ratio * 2).toString() + "px");
-          $(svug).attr('width', (ratio * zoomb * 2).toString() + "px")
+            marker.setAttribute('style', `height: ${(zoomb * ratio * 2).toString()}px; width: ${(zoomb * ratio * 2).toString()}px;`)
+            $(svug).attr('height', (zoomb * ratio * 2).toString() + "px");
+            $(svug).attr('width', (ratio * zoomb * 2).toString() + "px")
         }
     }
     for (var marker of document.querySelectorAll('.busMarker')) {
@@ -933,17 +943,17 @@ function fixSizes() {
 
 function lighten(color) {
     color = color.replace('#', '');
-    
+
     // Convert to RGB
-    var r = parseInt(color.substr(0,2), 16);
-    var g = parseInt(color.substr(2,2), 16);
-    var b = parseInt(color.substr(4,2), 16);
-    
+    var r = parseInt(color.substr(0, 2), 16);
+    var g = parseInt(color.substr(2, 2), 16);
+    var b = parseInt(color.substr(4, 2), 16);
+
     // Lighten
     r = Math.min(255, r + 120);
     g = Math.min(255, g + 120);
     b = Math.min(255, b + 120);
-    
+
     // Convert back to hex
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
