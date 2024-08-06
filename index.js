@@ -116,6 +116,8 @@ async function initialise() {
     }
     map.on('zoomend', fixSizes.bind(this));
     $("#status").hide();
+
+    console.log("Initial map center:", map.getCenter(), "zoom:", map.getZoom());
 };
 
 function setRoutes(what) {
@@ -690,6 +692,9 @@ function loadStops() {
     }
 
     this.stopsLoaded = true;
+
+    console.log("stopsReal object:", this.stopsReal);
+    this.stopsLoaded = true;
 }
 
 function loadAlerts() {
@@ -821,6 +826,13 @@ function fixSizes() {
             $(svug).attr('width', (ratio * zoomb).toString() + "px")
         }
     }
+    for (var marker of document.querySelectorAll('.stopMarker')) {
+        for (var svug of marker.childNodes) {
+          marker.setAttribute('style', `height: ${(zoomb * ratio * 2).toString()}px; width: ${(zoomb * ratio * 2).toString()}px;`)
+          $(svug).attr('height', (zoomb * ratio * 2).toString() + "px");
+          $(svug).attr('width', (ratio * zoomb * 2).toString() + "px")
+        }
+    }
     for (var marker of document.querySelectorAll('.busMarker')) {
         marker.style.height = `${(zoomb * busRatio).toString()}px`;
         marker.style.width = `${(zoomb * busRatio).toString()}px`;
@@ -857,6 +869,12 @@ function renderRoute(routeName) {
 var stopMarkers = []
 
 function renderCircle(routeList, stopName) {
+    console.log("Rendering stop:", stopName);
+    if (!this.stopsReal[stopName]) {
+      console.error("Stop not found in stopsReal:", stopName);
+      return;
+    }
+    console.log("Rendering stop:", stopName, "at", stopsReal[stopName].long, stopsReal[stopName].lat);
     let routList = [];
     let bruhMoment = JSON.parse(JSON.stringify(this.routesReal));
     for (var routte of routeList) {
