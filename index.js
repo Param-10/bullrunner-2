@@ -66,37 +66,17 @@ async function initialise() {
             setRoutes(JSON.parse(data));
             loadRoutes();
         }.bind(this)).fail(failure.bind(this));
-    try {
-        const response = await fetch('https://passio3.com/www/mapGetData.php?getStops=1&deviceId=' + deviceId + '&wTransloc=1', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'json={"s0":"2343","sA":1}',
-        });
+    await $.post("https://passio3.com/www/mapGetData.php?getStops=1&deviceId=" + deviceId + "&wTransloc=1", { json: '{"s0":"2343","sA":1}' },
+        function(data) {
+            if (Object.keys(JSON.parse(data)).length === 1) {
 
-        const data = await response.json();
-
-        if (Object.keys(data).length === 1) {
-            this.errorMessage = "Passio servers dead, ggwp :(";
-            document.getElementById('status').innerHTML = `
-                <h3 class="popupTitle">Something Went Wrong</h3>
-                </br>
-                <div class="popupItem">
-                  <h3>From Passio Official</h3>
-                  </br>
-                  "${data['error']}"
-                </div>
-              `;
-            throw new Error("Passio Gone");
-        }
-
-        setStops(data);
-        loadStops();
-    } catch (error) {
-        console.error('Error:', error);
-        failure.call(this);
-    }
+                this.errorMessage = "Passio servers dead, ggwp :(";
+                document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
+                throw new Error("Passio Gone");
+            }
+            setStops(JSON.parse(data));
+            loadStops();
+        }.bind(this)).fail(failure.bind(this));
     await $.post("https://passio3.com/www/goServices.php?getAlertMessages=1&deviceId=" + deviceId, { json: '{"systemSelected0":"2343", "amount":1}' },
         function(data) {
             if (Object.keys(JSON.parse(data)).length === 1) {
