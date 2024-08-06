@@ -219,7 +219,7 @@ async function setBusesFirst(what) {
         
         stopsHaveBuses = true;
     }
-    
+
     var current = $("#busesList").find('[class="popupList withSearch"]')[0];
     for (let rout of Object.keys(this.routesReal).toSorted()) {
         if (this.routesReal[rout].active) {
@@ -318,6 +318,7 @@ async function setBusesFirst(what) {
             }.bind(this)).fail(failure.bind(this));
     }, 10000);
     //setInterval.call(this, cleanup.bind(this), 10000);
+    updateBusVisibility();
 }
 
 function cleanup() {
@@ -756,51 +757,61 @@ function selectRoute(which) {
         box.style.backgroundColor = box.parentNode.style.borderColor;
     }
     displayRoutes();
-    for (var bus of Object.keys(this.busesReal)) {
-        try {
-            document.getElementById("bus" + bus).style.display = "none";
-        } catch (e) {
-            console.info(e);
-        }
-    }
-    for (let route of Object.keys(selectedRoutes)) {
-        for (var bus of this.routesReal[route].buses) {
-            document.getElementById("bus" + bus).style.display = "block";
-        }
-    }
+    updateBusVisibility();
 }
 
 function displayRoutes() {
+    // Remove all existing route layers
     for (var key of this.currentRoutes) {
-        try {
+        if (map.getLayer(key)) {
             map.removeLayer(key);
+        }
+        if (map.getLayer(key + "bg")) {
             map.removeLayer(key + "bg");
+        }
+        if (map.getSource(key)) {
             map.removeSource(key);
-        } catch {
-            {};
         }
     }
-    for (var toShow of Object.keys(this.selectedRoutes)) {
-        map.addSource(this.selectedRoutes[toShow].full, {
-            'type': 'geojson',
-            'data': {
-                'type': 'Feature',
-                'properties': {},
-                'geometry': {
-                    'type': 'LineString',
-                    'coordinates': this.selectedRoutes[toShow].coords
+
+    this.currentRoutes = Object.keys(this.selectedRoutes);
+
+    for (var toShow of this.currentRoutes) {
+        if (!map.getSource(toShow)) {
+            map.addSource(toShow, {
+                'type': 'geojson',
+                'data': {
+                    'type': 'Feature',
+                    'properties': {},
+                    'geometry': {
+                        'type': 'LineString',
+                        'coordinates': this.selectedRoutes[toShow].coords
+                    }
                 }
+            });
+        }
+
+        var color = this.selectedRoutes[toShow].color;
+        var lightColor = lighten(color);
+
+        map.addLayer({
+            'id': toShow + "bg",
+            'type': 'line',
+            'source': toShow,
+            'layout': {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            'paint': {
+                'line-color': lightColor,
+                'line-width': 7
             }
         });
-        var color = this.selectedRoutes[toShow].color;
-        var red = lighten(parseInt(color.substring(1, 3), 16));
-        var green = lighten(parseInt(color.substring(3, 5), 16));
-        var blue = lighten(parseInt(color.substring(5, 7), 16));
-        color = RGBtoHex(red, green, blue);
+
         map.addLayer({
-            'id': this.selectedRoutes[toShow].full + "bg",
+            'id': toShow,
             'type': 'line',
-            'source': this.selectedRoutes[toShow].full,
+            'source': toShow,
             'layout': {
                 'line-join': 'round',
                 'line-cap': 'round'
@@ -809,21 +820,9 @@ function displayRoutes() {
                 'line-color': color,
                 'line-width': 5
             }
-        })
-        map.addLayer({
-            'id': this.selectedRoutes[toShow].full,
-            'type': 'line',
-            'source': this.selectedRoutes[toShow].full,
-            'layout': {
-                'line-join': 'round',
-                'line-cap': 'round'
-            },
-            'paint': {
-                'line-color': this.selectedRoutes[toShow].color,
-                'line-width': 5
-            }
-        })
+        });
     }
+}
 
     // this.currentRoutes = Object.keys(this.selectedRoutes);
     // for(var rout of this.currentRoutes){
@@ -835,7 +834,7 @@ function displayRoutes() {
     //         console.log(dov);
     //     }
     // }
-}
+
 
 const ratio = 2;
 const busRatio = 3;
@@ -871,13 +870,34 @@ function fixSizes() {
     }
 }
 
-function lighten(what) {
-    var temp = what;
-    temp += 120;
-    if (temp > 255) {
-        temp = 255;
+function lighten(color) {
+    color = color.replace('#', '');
+    
+    // Convert to RGB
+    var r = parseInt(color.substr(0,2), 16);
+    var g = parseInt(color.substr(2,2), 16);
+    var b = parseInt(color.substr(4,2), 16);
+    
+    // Lighten
+    r = Math.min(255, r + 120);
+    g = Math.min(255, g + 120);
+    b = Math.min(255, b + 120);
+    
+    // Convert back to hex
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+function updateBusVisibility() {
+    for (var bus of Object.keys(this.busesReal)) {
+        var busElement = document.getElementById("bus" + bus);
+        if (busElement) {
+            if (Object.keys(selectedRoutes).includes(this.busesReal[bus].route)) {
+                busElement.style.display = "block";
+            } else {
+                busElement.style.display = "none";
+            }
+        }
     }
-    return temp;
 }
 
 function renderRoute(routeName) {
