@@ -713,7 +713,7 @@ function loadStops() {
     // Remove stops outside of a certain area
     for (var stop of Object.keys(this.stopsReal)) {
         let stoppe = this.stopsReal[stop];
-        if (stoppe.long < -75.6 || stoppe.long > -74.3 || stoppe.lat > 40.6 || stoppe.lat < 40.4) {
+        if (stoppe.long < -82.5 || stoppe.long > -82.3 || stoppe.lat > 27.9 || stoppe.lat < 28.2) {
             delete this.stopsReal[stop];
         }
     }
