@@ -402,9 +402,7 @@ function bussyDeletion() {
         }
     }
 }
-$(document).ready(function() {
-    fetchStops();
-});
+
 
 function setStops(data) {
     console.log(`Number of stops received from server: ${data.stops.length}`);
