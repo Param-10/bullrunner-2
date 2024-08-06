@@ -118,6 +118,10 @@ async function initialise() {
     $("#status").hide();
 
     console.log("Initial map center:", map.getCenter(), "zoom:", map.getZoom());
+    map.on('style.load', () => {
+        console.log("Map style fully loaded");
+    });
+    console.log("Mapbox GL JS version:", mapboxgl.version);
 };
 
 function setRoutes(what) {
@@ -198,9 +202,12 @@ async function setBusesFirst(what) {
         }
         this.stopsOrdered = Object.keys(this.stopsReal);
         this.stopsOrdered.sort();
-        for (var stoppe of this.stopsOrdered) {
-            this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
-        }
+        setTimeout(() => {
+            for (var stoppe of this.stopsOrdered) {
+                this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
+            }
+            checkStopMarkersInView();
+        }, 2000);  // 2 second delay
         stopsHaveBuses = true;
     }
     var current = $("#busesList").find('[class="popupList withSearch"]')[0];
@@ -695,6 +702,9 @@ function loadStops() {
 
     console.log("stopsReal object:", this.stopsReal);
     this.stopsLoaded = true;
+
+    console.log("Number of stops loaded:", Object.keys(this.stopsReal).length);
+    console.log("Sample stop data:", this.stopsReal[Object.keys(this.stopsReal)[0]]);
 }
 
 function loadAlerts() {
@@ -874,6 +884,7 @@ function renderCircle(routeList, stopName) {
       console.error("Stop not found in stopsReal:", stopName);
       return;
     }
+    console.log("Creating marker for stop:", stopName, "at position:", [stopsReal[stopName].long, stopsReal[stopName].lat]);
     console.log("Rendering stop:", stopName, "at", stopsReal[stopName].long, stopsReal[stopName].lat);
     let routList = [];
     let bruhMoment = JSON.parse(JSON.stringify(this.routesReal));
@@ -907,6 +918,18 @@ function renderCircle(routeList, stopName) {
         }
     }
     this.stopMarkers.push(new mapboxgl.Marker(svg).setLngLat([stopsReal[stopName].long, stopsReal[stopName].lat]).addTo(map));
+    console.log("Stop marker added for:", stopName);
+}
+
+function checkStopMarkersInView() {
+    let bounds = map.getBounds();
+    let inViewCount = 0;
+    for (let marker of stopMarkers) {
+        if (bounds.contains(marker.getLngLat())) {
+            inViewCount++;
+        }
+    }
+    console.log("Stop markers in current view:", inViewCount);
 }
 
 function showStopDetails(stopName) {
