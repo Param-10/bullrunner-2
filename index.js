@@ -122,6 +122,12 @@ async function initialise() {
         console.log("Map style fully loaded");
     });
     console.log("Mapbox GL JS version:", mapboxgl.version);
+    map.on('load', () => {
+        console.log("Map fully loaded");
+        if (this.stopsLoaded) {
+            renderAllStops.call(this);
+        }
+    });
 };
 
 function setRoutes(what) {
@@ -613,6 +619,7 @@ function loadStops() {
             this.routesReal[this.stops['routes'][keys[i]][0]].path = this.stops['routes'][keys[i]].slice(2);
         };
     };
+
     keys = Object.keys(this.stops['stops']);
     for (var key of keys) {
         for (var madeKey of Object.keys(stopsReal)) {
@@ -700,6 +707,11 @@ function loadStops() {
             this.routesReal[key].stopIndices[this.stopsReal[stooop].iAmThisPoint[key]] = stooop;
         }
     }
+    console.log("Number of stops loaded:", Object.keys(this.stops['stops']).length);
+    if (Object.keys(this.stops['stops']).length === 0) {
+        console.error("No stops data received from the server");
+        return;
+    }
     console.log(this.routesReal);
     console.log(Date.now());
     for (var stop of Object.keys(this.stopsReal)) {
@@ -723,6 +735,28 @@ function loadStops() {
     }
 
     this.stopsLoaded = true;
+    this.stopsLoaded = true;
+    console.log("Stops loaded");
+
+    if (map.loaded()) {
+        renderAllStops.call(this);
+    }
+}
+
+function renderAllStops() {
+    console.log("Rendering all stops");
+    if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
+        console.error("No stops to render");
+        return;
+    }
+    for (var stoppe of this.stopsOrdered) {
+        if (this.stopsReal[stoppe] && this.stopsReal[stoppe].routes) {
+            this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
+        } else {
+            console.error("Invalid stop data for:", stoppe);
+        }
+    }
+    checkStopMarkersInView();
 }
 
 function loadAlerts() {
@@ -748,7 +782,17 @@ function showRoute(which) {
 }
 
 function selectRoute(which) {
-    var box = $(document.getElementById(which)).find('[class="routeSelector"]')[0];
+    console.log("Selecting route:", which);
+    var routeElement = document.getElementById(which);
+    if (!routeElement) {
+        console.error("Route element not found:", which);
+        return;
+    }
+    var box = $(routeElement).find('[class="routeSelector"]')[0];
+    if (!box) {
+        console.error("Route selector not found for:", which);
+        return;
+    }
     if (Object.keys(selectedRoutes).includes(which)) {
         delete selectedRoutes[which];
         box.style.backgroundColor = "";
@@ -761,7 +805,7 @@ function selectRoute(which) {
 }
 
 function displayRoutes() {
-    // Remove all existing route layers
+    
     for (var key of this.currentRoutes) {
         if (map.getLayer(key)) {
             map.removeLayer(key);
@@ -778,17 +822,22 @@ function displayRoutes() {
 
     for (var toShow of this.currentRoutes) {
         if (!map.getSource(toShow)) {
-            map.addSource(toShow, {
-                'type': 'geojson',
-                'data': {
-                    'type': 'Feature',
-                    'properties': {},
-                    'geometry': {
-                        'type': 'LineString',
-                        'coordinates': this.selectedRoutes[toShow].coords
+            try {
+                map.addSource(toShow, {
+                    'type': 'geojson',
+                    'data': {
+                        'type': 'Feature',
+                        'properties': {},
+                        'geometry': {
+                            'type': 'LineString',
+                            'coordinates': this.selectedRoutes[toShow].coords
+                        }
                     }
-                }
-            });
+                });
+            } catch (error) {
+                console.error("Error adding source for route:", toShow, error);
+                continue;
+            }
         }
 
         var color = this.selectedRoutes[toShow].color;
@@ -821,6 +870,19 @@ function displayRoutes() {
                 'line-width': 5
             }
         });
+    }
+}
+
+function updateBusVisibility() {
+    for (var bus of Object.keys(this.busesReal)) {
+        var busElement = document.getElementById("bus" + bus);
+        if (busElement) {
+            if (Object.keys(selectedRoutes).includes(this.busesReal[bus].route)) {
+                busElement.style.display = "block";
+            } else {
+                busElement.style.display = "none";
+            }
+        }
     }
 }
 
@@ -916,7 +978,7 @@ function renderRoute(routeName) {
 var stopMarkers = []
 
 function renderCircle(routeList, stopName) {
-    console.log("Creating marker for stop:", stopName, "at position:", [stopsReal[stopName].long, stopsReal[stopName].lat]);
+
     console.log("Rendering stop:", stopName);
     if (!this.stopsReal[stopName]) {
         console.error("Stop not found in stopsReal:", stopName);
@@ -926,6 +988,8 @@ function renderCircle(routeList, stopName) {
         console.error("Map not loaded yet, cannot render stop:", stopName);
         return;
     }
+
+    console.log("Creating marker for stop:", stopName, "at position:", [stopsReal[stopName].long, stopsReal[stopName].lat]);
 
     let routList = [];
     let bruhMoment = JSON.parse(JSON.stringify(this.routesReal));
@@ -951,18 +1015,13 @@ function renderCircle(routeList, stopName) {
         inner += '</svg>\n';
     }
     svg.innerHTML = inner;
-    svg.addEventListener('click', function() { showStopDetails(stopName) }.bind(this));
-    for (var marekr of stopMarkers) {
-        if (marekr.getLngLat().lng === stopsReal[stopName].long && marekr.getLngLat().lat === stopsReal[stopName].lat) {
-            this.stopMarkers.push(new mapboxgl.Marker(svg).setLngLat([stopsReal[stopName].long + 0.00003, stopsReal[stopName].lat]).addTo(map));
-            return;
-        }
-    }
-    this.stopMarkers.push(new mapboxgl.Marker(svg).setLngLat([stopsReal[stopName].long, stopsReal[stopName].lat]).addTo(map));
-    console.log("Stop marker added for:", stopName);
+    svg.addEventListener('click', () => { showStopDetails(stopName); });
 
     try {
-        this.stopMarkers.push(new mapboxgl.Marker(svg).setLngLat([stopsReal[stopName].long, stopsReal[stopName].lat]).addTo(map));
+        let marker = new mapboxgl.Marker(svg)
+            .setLngLat([stopsReal[stopName].long, stopsReal[stopName].lat])
+            .addTo(map);
+        this.stopMarkers.push(marker);
         console.log("Stop marker added for:", stopName);
     } catch (error) {
         console.error("Error adding marker for stop:", stopName, error);
@@ -970,10 +1029,14 @@ function renderCircle(routeList, stopName) {
 }
 
 function checkStopMarkersInView() {
+    if (!map.getBounds) {
+        console.error("Map bounds not available");
+        return;
+    }
     let bounds = map.getBounds();
     let inViewCount = 0;
-    for (let marker of stopMarkers) {
-        if (bounds.contains(marker.getLngLat())) {
+    for (let marker of this.stopMarkers) {
+        if (marker && marker.getLngLat && bounds.contains(marker.getLngLat())) {
             inViewCount++;
         }
     }
