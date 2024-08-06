@@ -1128,26 +1128,49 @@ var allLines = [];
 var madeLines = false;
 
 function getETA(route, speed, start, end, bus) {
-    var toRet;
+    // Check if route exists in this.routesReal
+    if (!this.routesReal || !this.routesReal[route] || !this.routesReal[route].coords) {
+        console.error(`Invalid route or missing coordinates for route: ${route}`);
+        return null;
+    }
+
+    const coords = this.routesReal[route].coords;
+
+    // Check if start and end indices are valid
+    if (start < 0 || end < 0 || start >= coords.length || end >= coords.length) {
+        console.error(`Invalid start (${start}) or end (${end}) index for route: ${route}`);
+        return null;
+    }
+
     if (start === end) {
         return 0;
     }
-    console.log(turf.distance(turf.point(this.routesReal[route].coords[start]), turf.point(this.routesReal[route].coords[end]), { units: 'kilometers' }).toFixed(1) + "km distance betweeen start and stop of bus " + bus + 'points: ' + start + " " + end);
-    if (turf.distance(turf.point(this.routesReal[route].coords[start]), turf.point(this.routesReal[route].coords[end]), { units: 'kilometers' }) < 0.05) {
-        return 0;
-    }
+
     try {
+        const startPoint = turf.point(coords[start]);
+        const endPoint = turf.point(coords[end]);
+
+        const distance = turf.distance(startPoint, endPoint, { units: 'kilometers' });
+        console.log(`${distance.toFixed(1)}km distance between start and stop of bus ${bus}, points: ${start} ${end}`);
+
+        if (distance < 0.05) {
+            return 0;
+        }
+
+        let toRet;
         if (end < start) {
-            toRet = (turf.length(turf.lineString(this.routesReal[route].coords.slice(start, this.routesReal[route].coords.length - 1).concat(this.routesReal[route].coords.slice(0, end))), { units: 'kilometers' }) * 1000) / speed;
+            const lineString = turf.lineString(coords.slice(start).concat(coords.slice(0, end + 1)));
+            toRet = (turf.length(lineString, { units: 'kilometers' }) * 1000) / speed;
         } else {
-            toRet = (turf.length(turf.lineString(this.routesReal[route].coords.slice(start, end + 1)), { units: 'kilometers' }) * 1000) / speed;
+            const lineString = turf.lineString(coords.slice(start, end + 1));
+            toRet = (turf.length(lineString, { units: 'kilometers' }) * 1000) / speed;
         }
+
+        return toRet;
     } catch (e) {
-        if (e.message == "coordinates must be an array of two or more positions") {
-            toRet = 0;
-        }
+        console.error(`Error in getETA for route ${route}, bus ${bus}:`, e);
+        return null;
     }
-    return toRet;
 }
 // --------------------------------------------------------------------------
 
