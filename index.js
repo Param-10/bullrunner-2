@@ -109,6 +109,9 @@ async function initialise() {
                 `;
         }
     }
+    $(document).ready(function() {
+        fetchStops();
+    });
     await $.post("https://passio3.com/www/goServices.php?getAlertMessages=1&deviceId=" + deviceId, { json: '{"systemSelected0":"2343", "amount":1}' },
         function(data) {
             if (Object.keys(JSON.parse(data)).length === 1) {
