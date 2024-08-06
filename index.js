@@ -128,6 +128,10 @@ async function initialise() {
     });
 }
 
+function setStops(what) {
+    this.stops = what;
+}
+
 function setRoutes(what) {
     this.routes = what;
 }
@@ -382,9 +386,7 @@ function bussyDeletion() {
     }
 }
 
-function setStops(what) {
-    this.stops = what;
-}
+
 
 function openStops() {
     closeAll();
