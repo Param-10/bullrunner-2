@@ -202,14 +202,24 @@ async function setBusesFirst(what) {
         }
         this.stopsOrdered = Object.keys(this.stopsReal);
         this.stopsOrdered.sort();
-        setTimeout(() => {
+        
+        if (map.loaded()) {
             for (var stoppe of this.stopsOrdered) {
                 this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
             }
             checkStopMarkersInView();
-        }, 2000);  // 2 second delay
+        } else {
+            map.on('load', () => {
+                for (var stoppe of this.stopsOrdered) {
+                    this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
+                }
+                checkStopMarkersInView();
+            });
+        }
+        
         stopsHaveBuses = true;
     }
+    
     var current = $("#busesList").find('[class="popupList withSearch"]')[0];
     for (let rout of Object.keys(this.routesReal).toSorted()) {
         if (this.routesReal[rout].active) {
@@ -703,8 +713,15 @@ function loadStops() {
     console.log("stopsReal object:", this.stopsReal);
     this.stopsLoaded = true;
 
-    console.log("Number of stops loaded:", Object.keys(this.stopsReal).length);
     console.log("Sample stop data:", this.stopsReal[Object.keys(this.stopsReal)[0]]);
+
+    console.log("Number of stops loaded:", Object.keys(this.stopsReal).length);
+    if (Object.keys(this.stopsReal).length === 0) {
+        console.error("No stops were loaded into stopsReal");
+        return;
+    }
+
+    this.stopsLoaded = true;
 }
 
 function loadAlerts() {
@@ -879,13 +896,17 @@ function renderRoute(routeName) {
 var stopMarkers = []
 
 function renderCircle(routeList, stopName) {
+    console.log("Creating marker for stop:", stopName, "at position:", [stopsReal[stopName].long, stopsReal[stopName].lat]);
     console.log("Rendering stop:", stopName);
     if (!this.stopsReal[stopName]) {
-      console.error("Stop not found in stopsReal:", stopName);
-      return;
+        console.error("Stop not found in stopsReal:", stopName);
+        return;
     }
-    console.log("Creating marker for stop:", stopName, "at position:", [stopsReal[stopName].long, stopsReal[stopName].lat]);
-    console.log("Rendering stop:", stopName, "at", stopsReal[stopName].long, stopsReal[stopName].lat);
+    if (!map.loaded()) {
+        console.error("Map not loaded yet, cannot render stop:", stopName);
+        return;
+    }
+
     let routList = [];
     let bruhMoment = JSON.parse(JSON.stringify(this.routesReal));
     for (var routte of routeList) {
@@ -919,6 +940,13 @@ function renderCircle(routeList, stopName) {
     }
     this.stopMarkers.push(new mapboxgl.Marker(svg).setLngLat([stopsReal[stopName].long, stopsReal[stopName].lat]).addTo(map));
     console.log("Stop marker added for:", stopName);
+
+    try {
+        this.stopMarkers.push(new mapboxgl.Marker(svg).setLngLat([stopsReal[stopName].long, stopsReal[stopName].lat]).addTo(map));
+        console.log("Stop marker added for:", stopName);
+    } catch (error) {
+        console.error("Error adding marker for stop:", stopName, error);
+    }
 }
 
 function checkStopMarkersInView() {
