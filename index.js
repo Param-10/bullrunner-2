@@ -42,7 +42,6 @@ function failure() {
 
 async function initialise() {
     this.renderAllStops = this.renderAllStops.bind(this);
-    //update
 
     document.getElementById('busSearch').addEventListener('input', function(event) { filterBuses(event.data) });
     document.getElementById('stopSearch').addEventListener('input', function(event) { filterStops(event.data) });
@@ -134,7 +133,9 @@ async function initialise() {
         console.log("stopsLoaded value:", this.stopsLoaded);
         if (this.stopsLoaded) {
             console.log("Calling renderAllStops from map load event");
-            this.renderAllStops();
+            setTimeout(() => {
+                this.renderAllStops();
+            }, 100);
         } else {
             console.log("Stops not loaded yet when map load event fired");
         }
@@ -142,7 +143,9 @@ async function initialise() {
 
     if (map.loaded()) {
         console.log("Map already loaded, calling renderAllStops immediately");
-        this.renderAllStops();
+        setTimeout(() => {
+            this.renderAllStops();
+        }, 100);
     }
 
     setTimeout(() => {
@@ -743,13 +746,16 @@ function loadStops() {
         }
     }
 
+    console.log("Number of stops loaded:", this.stopsOrdered.length);
+
     this.stopsLoaded = true;
-    this.stopsLoaded = true;
+
     console.log("loadStops function completed, stopsLoaded set to true");
 }
 
 function renderAllStops() {
     console.log("renderAllStops function called");
+    console.log("this object:", this);
     console.log("Number of stops to render:", this.stopsOrdered ? this.stopsOrdered.length : 0);
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
@@ -988,6 +994,7 @@ var stopMarkers = []
 function renderCircle(routeList, stopName) {
     console.log("Beginning renderCircle for stop:", stopName);
     console.log("Route list for this stop:", routeList);
+    console.log("Stop data:", this.stopsReal[stopName]);
 
     if (!this.stopsReal[stopName]) {
         console.error("Stop not found in stopsReal:", stopName);
