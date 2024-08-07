@@ -1,3 +1,4 @@
+
 var routes;
 var inactiveRoutes = [];
 var stops;
@@ -41,8 +42,6 @@ function failure() {
 }
 
 async function initialise() {
-    this.renderAllStops = this.renderAllStops.bind(this);
-
     document.getElementById('busSearch').addEventListener('input', function(event) { filterBuses(event.data) });
     document.getElementById('stopSearch').addEventListener('input', function(event) { filterStops(event.data) });
     $.ajaxSetup({
@@ -120,41 +119,14 @@ async function initialise() {
     console.log("Initial map center:", map.getCenter(), "zoom:", map.getZoom());
     map.on('style.load', () => {
         console.log("Map style fully loaded");
-        if (this.stopsLoaded) {
-          console.log("Calling renderAllStops");
-          renderAllStops.call(this);
-        } else {
-          console.log("Stops not loaded yet");
-        }
-      });
+    });
     console.log("Mapbox GL JS version:", mapboxgl.version);
     map.on('load', () => {
-        console.log("Map 'load' event fired");
-        console.log("stopsLoaded value:", this.stopsLoaded);
+        console.log("Map fully loaded");
         if (this.stopsLoaded) {
-            console.log("Calling renderAllStops from map load event");
-            setTimeout(() => {
-                this.renderAllStops();
-            }, 100);
-        } else {
-            console.log("Stops not loaded yet when map load event fired");
+            renderAllStops.call(this);
         }
     });
-
-    if (map.loaded()) {
-        console.log("Map already loaded, calling renderAllStops immediately");
-        setTimeout(() => {
-            this.renderAllStops();
-        }, 100);
-    }
-
-    setTimeout(() => {
-        console.log("Timeout reached. stopsLoaded:", this.stopsLoaded, "stopMarkers length:", this.stopMarkers ? this.stopMarkers.length : 0);
-        if (this.stopsLoaded && (!this.stopMarkers || this.stopMarkers.length === 0)) {
-            console.log("Calling renderAllStops after timeout");
-            this.renderAllStops();
-        }
-    }, 5000);
 }
 
 function setStops(what) {
@@ -247,7 +219,6 @@ async function setBusesFirst(what) {
             checkStopMarkersInView();
         } else {
             map.on('load', () => {
-                console.log("Map 'load' event fired");
                 for (var stoppe of this.stopsOrdered) {
                     this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
                 }
@@ -452,6 +423,7 @@ function updateBuses() {
     }
     for (var bussy of Object.keys(busesReal)) {
         if (!(Object.keys(this.routesReal).includes(this.busesReal[bussy].route))) {
+            console.warn(`Invalid route for bus ${bussy}: ${this.busesReal[bussy].route}`);
             continue;
         }
         var shortest = 1000;
@@ -490,7 +462,8 @@ function updateBuses() {
     }
 
     for (let bus of Object.keys(this.busesReal).toSorted()) {
-        if (!(Object.keys(this.routesReal).includes(this.busesReal[bussy].route))) {
+        if (!(Object.keys(this.routesReal).includes(this.busesReal[bus].route))) {
+            console.warn(`Invalid route for bus ${bus}: ${this.busesReal[bus].route}`);
             continue;
         }
         if (this.busesReal[bus].active && Object.keys(this.routesReal).includes(busesReal[bus].route)) {
@@ -746,35 +719,31 @@ function loadStops() {
         }
     }
 
-    console.log("Number of stops loaded:", this.stopsOrdered.length);
-    console.log("stopsOrdered before setting stopsLoaded:", this.stopsOrdered);
     this.stopsLoaded = true;
-    if (map.loaded()) {
-        console.log("Map loaded, calling renderAllStops from loadStops");
-        this.renderAllStops();
-    }
-
-    console.log("loadStops function completed, stopsLoaded set to true");
 }
 
 function renderAllStops() {
-    console.log("renderAllStops function called");
-    console.log("this object:", this);
-    console.log("Number of stops to render:", this.stopsOrdered ? this.stopsOrdered.length : 0);
+    console.log("Rendering all stops");
+    if (!map.loaded()) {
+        console.log("Map not loaded, waiting...");
+        map.on('load', () => {
+            this.renderAllStops();
+        });
+        return;
+    }
+
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
     }
     for (var stoppe of this.stopsOrdered) {
-        console.log("Attempting to render stop:", stoppe);
         if (this.stopsReal[stoppe] && this.stopsReal[stoppe].routes) {
-            this.renderCircle(this.stopsReal[stoppe].routes, stoppe);
+            this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
         } else {
             console.error("Invalid stop data for:", stoppe);
         }
     }
-    console.log("Finished renderAllStops function");
-    this.checkStopMarkersInView();
+    checkStopMarkersInView();
 }
 
 function loadAlerts() {
@@ -996,21 +965,18 @@ function renderRoute(routeName) {
 var stopMarkers = []
 
 function renderCircle(routeList, stopName) {
-    console.log("Beginning renderCircle for stop:", stopName);
-    console.log("Route list for this stop:", routeList);
-    console.log("Stop data:", this.stopsReal[stopName]);
+    console.log("Rendering stop:", stopName, "at position:", [this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
 
+    console.log("Rendering stop:", stopName);
     if (!this.stopsReal[stopName]) {
         console.error("Stop not found in stopsReal:", stopName);
         return;
     }
-
     if (!map.loaded()) {
         console.error("Map not loaded yet, cannot render stop:", stopName);
         return;
     }
 
-    console.log("Stop data:", this.stopsReal[stopName]);
     console.log("Creating marker for stop:", stopName, "at position:", [this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
 
     let routList = [];
@@ -1021,8 +987,6 @@ function renderCircle(routeList, stopName) {
             routList.push(routte);
         }
     }
-    console.log("Active routes for this stop:", routList);
-
     let svg = document.createElement('div');
     svg.className = 'stopMarker';
     svg.id = 'stop: ' + stopName;
@@ -1039,12 +1003,7 @@ function renderCircle(routeList, stopName) {
         inner += '</svg>\n';
     }
     svg.innerHTML = inner;
-    console.log("Created SVG element for stop:", stopName);
-
-    svg.addEventListener('click', () => { 
-        console.log("Stop marker clicked:", stopName);
-        showStopDetails(stopName); 
-    });
+    svg.addEventListener('click', () => { showStopDetails(stopName); });
 
     try {
         let marker = new mapboxgl.Marker(svg)
@@ -1055,8 +1014,6 @@ function renderCircle(routeList, stopName) {
     } catch (error) {
         console.error("Error adding marker for stop:", stopName, error);
     }
-
-    console.log("Finished renderCircle for stop:", stopName);
 }
 
 function checkStopMarkersInView() {
@@ -1183,8 +1140,12 @@ var allLines = [];
 var madeLines = false;
 
 function getETA(route, speed, start, end, bus) {
-    if (!this.routesReal[route] || !this.routesReal[route].coords || !this.routesReal[route].coords[start] || !this.routesReal[route].coords[end]) {
-        console.error("Invalid coordinates for route:", route, "start:", start, "end:", end);
+    if (!this.routesReal[route] || !this.routesReal[route].coords) {
+        console.warn(`Invalid route data for ${route}`);
+        return 0;
+    }
+    if (start === undefined || end === undefined || start >= this.routesReal[route].coords.length || end >= this.routesReal[route].coords.length) {
+        console.warn(`Invalid start/end points for route ${route}, start: ${start}, end: ${end}`);
         return 0;
     }
 
@@ -1203,9 +1164,8 @@ function getETA(route, speed, start, end, bus) {
             toRet = (turf.length(turf.lineString(this.routesReal[route].coords.slice(start, end + 1)), { units: 'kilometers' }) * 1000) / speed;
         }
     } catch (e) {
-        if (e.message == "coordinates must be an array of two or more positions") {
-            toRet = 0;
-        }
+        console.error("Error calculating ETA:", e);
+        toRet = 0;
     }
     return toRet;
 }
