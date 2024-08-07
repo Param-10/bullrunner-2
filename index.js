@@ -721,6 +721,14 @@ function loadStops() {
 
 function renderAllStops() {
     console.log("Rendering all stops");
+    if (!map.loaded()) {
+        console.log("Map not loaded, waiting...");
+        map.on('load', () => {
+            this.renderAllStops();
+        });
+        return;
+    }
+
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
@@ -954,6 +962,7 @@ function renderRoute(routeName) {
 var stopMarkers = []
 
 function renderCircle(routeList, stopName) {
+    console.log("Rendering stop:", stopName, "at position:", [this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
 
     console.log("Rendering stop:", stopName);
     if (!this.stopsReal[stopName]) {
@@ -1128,6 +1137,11 @@ var allLines = [];
 var madeLines = false;
 
 function getETA(route, speed, start, end, bus) {
+    if (!this.routesReal[route] || !this.routesReal[route].coords[start] || !this.routesReal[route].coords[end]) {
+        console.warn(`Invalid coordinates for route ${route}, start: ${start}, end: ${end}`);
+        return 0;
+    }
+
     var toRet;
     if (start === end) {
         return 0;
