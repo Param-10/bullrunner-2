@@ -1065,10 +1065,11 @@ function showStopOnMap(stopName) {
     $("#stopsList").hide();
     $("#routesList").hide();
 
-    
+
     console.log("stopName:", stopName);
     console.log("this.stopsReal[stopName]:", this.stopsReal[stopName]);
 
+    
     if (this.stopsReal[stopName]) {
         map.setCenter([this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
         map.setZoom(16);
