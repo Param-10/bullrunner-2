@@ -747,8 +747,12 @@ function loadStops() {
     }
 
     console.log("Number of stops loaded:", this.stopsOrdered.length);
-
+    console.log("stopsOrdered before setting stopsLoaded:", this.stopsOrdered);
     this.stopsLoaded = true;
+    if (map.loaded()) {
+        console.log("Map loaded, calling renderAllStops from loadStops");
+        this.renderAllStops();
+    }
 
     console.log("loadStops function completed, stopsLoaded set to true");
 }
@@ -1179,6 +1183,11 @@ var allLines = [];
 var madeLines = false;
 
 function getETA(route, speed, start, end, bus) {
+    if (!this.routesReal[route] || !this.routesReal[route].coords || !this.routesReal[route].coords[start] || !this.routesReal[route].coords[end]) {
+        console.error("Invalid coordinates for route:", route, "start:", start, "end:", end);
+        return 0;
+    }
+
     var toRet;
     if (start === end) {
         return 0;
