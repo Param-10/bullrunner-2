@@ -25,7 +25,7 @@ var selectedRoutes = {};
 var currentRoutes = [];
 var stopsOrdered = [];
 var hasBuses = [];
-addEventListener(map.load, initialise());
+map.on('load', initialise.bind(this));
 
 var stopsHashMap = {};
 var errorMessage = "PassioGO! is being slow :)\nIt's still loading.";
@@ -221,6 +221,8 @@ function showBusOnMap(which) {
 }
 
 async function setBusesFirst(what) {
+    this.renderAllStops = this.renderAllStops.bind(this);
+
     this.trueSetBuses.call(this, what);
     this.bussyDeletion.call(this);
     for (var rout of Object.keys(this.routesReal).toSorted()) {
@@ -754,7 +756,9 @@ function loadStops() {
 
     if (map.loaded()) {
         console.log("Map loaded, calling renderAllStops from loadStops");
-        this.renderAllStops();
+        setTimeout(() => {
+            this.renderAllStops();
+        }, 100);
     }
 }
 
