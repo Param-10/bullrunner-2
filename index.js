@@ -128,23 +128,23 @@ async function initialise() {
         }
       });
     console.log("Mapbox GL JS version:", mapboxgl.version);
+    if (map.loaded()) {
+        console.log("Map already loaded, calling renderAllStops immediately");
+        this.renderAllStops();
+    }
+    
     map.on('load', () => {
         console.log("Map 'load' event fired");
         console.log("stopsLoaded value:", this.stopsLoaded);
         if (this.stopsLoaded) {
-          console.log("Calling renderAllStops");
-          this.renderAllStops();
+            console.log("Calling renderAllStops");
+            this.renderAllStops();
         } else {
-          console.log("Stops not loaded yet");
+            console.log("Stops not loaded yet");
         }
-      });
+    });
 
-      if (map.loaded()) {
-        console.log("Map already loaded, calling renderAllStops immediately");
-        this.renderAllStops();
-      }
-
-      if (map.loaded()) {
+    if (map.loaded()) {
         console.log("Map loaded, calling renderAllStops from loadStops");
         setTimeout(() => {
             this.renderAllStops();
@@ -1193,8 +1193,8 @@ function getETA(route, speed, start, end, bus) {
         console.error("Invalid route data for:", route);
         return 0;
     }
-    if (start === undefined || end === undefined) {
-        console.error("Invalid start or end for bus:", bus);
+    if (start === undefined || end === undefined || start < 0 || end < 0 || start >= this.routesReal[route].coords.length || end >= this.routesReal[route].coords.length) {
+        console.error("Invalid start or end for bus:", bus, "start:", start, "end:", end);
         return 0;
     }
     var toRet;
