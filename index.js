@@ -34,10 +34,10 @@ function stillLoading() { alert(this.errorMessage) };
 
 var deviceId = (Math.floor(Math.random() * (10 ** 8))).toString()
 
-function failure() {
+function failure(error) {
     $("#status").show();
-    this.errorMessage = 'Passio servers dead, ggwp :(';
-    document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>We Don't Know Why</h3></br>But basically their service is down.</div>`;
+    this.errorMessage = 'An error occurred: ' + (error ? error.message : 'Unknown error');
+    document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>Error Details</h3></br>${this.errorMessage}</div>`;
 }
 
 async function initialise() {
@@ -77,7 +77,7 @@ async function initialise() {
         console.log("All data loaded and map is ready");
     } catch (error) {
         console.error("Error during initialization:", error);
-        this.failure();
+        this.failure(error);
         return;
     }
 
@@ -511,92 +511,119 @@ function showBusDetails(which) {
     busMarkers[which][0].getElement().lastChild.style.display = "inline-block";
 }
 
-function loadRoutes() {
-    let current = $("#routesList").find('[class="popupList"]')[0];
-    var temp = [];
-    this.routes.sort(function(a, b) {
-        return a['nameOrig'].localeCompare(b['nameOrig']);
-    });
-    for (var i = 0; i < this.routes.length; i++) {
-        if (!(excludeMyIDs.includes(this.routes[i].myid))) {
-            if (Object.keys(this.routes[i]).includes("serviceTime")) {
-                this.inactiveRoutes.push(this.routes[i]);
-            } else {
-                temp.push(this.routes[i]);
+async function loadRoutes() {
+    console.log("Starting loadRoutes function");
+    try {
+        const response = await $.post("https://passio3.com/www/mapGetData.php?getRoutes=1&deviceId=" + deviceId + "&wTransloc=1", 
+            { json: '{"systemSelected0":"2343","amount":1}' }
+        );
+        
+        const data = JSON.parse(response);
+        if (Object.keys(data).length === 1 && data.error) {
+            throw new Error("Passio servers returned an error: " + data.error);
+        }
+        
+        this.setRoutes(data);
+        
+        if (!this.routes || !Array.isArray(this.routes)) {
+            throw new Error("Invalid routes data received");
+        }
+
+        console.log("Routes data received:", this.routes);
+
+        let current = $("#routesList").find('[class="popupList"]')[0];
+        var temp = [];
+        this.routes.sort((a, b) => a.nameOrig.localeCompare(b.nameOrig));
+
+        for (var i = 0; i < this.routes.length; i++) {
+            if (!(excludeMyIDs.includes(this.routes[i].myid))) {
+                if (Object.keys(this.routes[i]).includes("serviceTime")) {
+                    this.inactiveRoutes.push(this.routes[i]);
+                } else {
+                    temp.push(this.routes[i]);
+                }
             }
         }
-    }
-    this.routes = temp;
-    for (let i = 0; i < this.routes.length; i++) {
-        current.append(document.createElement("div"));
-        current.lastChild.className = routeItem;
-        current.lastChild.id = this.routes[i].nameOrig;
-        try {
-            current.lastChild.innerHTML = this.routes[i].nameOrig + " | " + this.routes[i].shortName.toUpperCase();
-        } catch (e) {
-            if (e instanceof TypeError) {
-                current.lastChild.innerHTML = this.routes[i].nameOrig + " | Special Route";
+        this.routes = temp;
+
+        for (let i = 0; i < this.routes.length; i++) {
+            current.append(document.createElement("div"));
+            current.lastChild.className = routeItem;
+            current.lastChild.id = this.routes[i].nameOrig;
+            try {
+                current.lastChild.innerHTML = this.routes[i].nameOrig + " | " + this.routes[i].shortName.toUpperCase();
+            } catch (e) {
+                if (e instanceof TypeError) {
+                    current.lastChild.innerHTML = this.routes[i].nameOrig + " | Special Route";
+                }
+            }
+            current.lastChild.append(document.createElement('div'));
+            current.lastChild.lastChild.className = 'routeSelector';
+            let nam = this.routes[i].nameOrig;
+            current.lastChild.style.borderColor = this.routes[i].color;
+            let hihi = current.lastChild.lastChild;
+            let hi = current.lastChild;
+            hihi.addEventListener('click', function(e) { selectRoute(nam) }.bind(this));
+            hi.addEventListener("click", function(e) { if (hi === e.target) { showRoute(this.routes[i].nameOrig) } }.bind(this));
+            this.routesReal[this.routes[i].nameOrig] = {
+                id: this.routes[i].myid.toString(),
+                short: this.routes[i].shortName,
+                full: this.routes[i].nameOrig,
+                path: [],
+                buses: [],
+                coords: [],
+                centre: [parseFloat(this.routes[i].longitude), parseFloat(this.routes[i].latitude)],
+                zoom: this.routes[i].distance,
+                active: true,
+                color: this.routes[i].color
+            };
+            if (this.routesReal[this.routes[i].nameOrig].short === null) {
+                this.routesReal[this.routes[i].nameOrig].short = "SP Route";
             }
         }
-        current.lastChild.append(document.createElement('div'));
-        current.lastChild.lastChild.className = 'routeSelector';
-        let nam = this.routes[i].nameOrig;
-        current.lastChild.style.borderColor = this.routes[i].color;
-        let hihi = current.lastChild.lastChild;
-        let hi = current.lastChild;
-        hihi.addEventListener('click', function(e) { selectRoute(nam) }.bind(this));
-        hi.addEventListener("click", function(e) { if (hi === e.target) { showRoute(this.routes[i].nameOrig) } }.bind(this));
-        this.routesReal[this.routes[i].nameOrig] = {
-            id: this.routes[i].myid.toString(),
-            short: this.routes[i].shortName,
-            full: this.routes[i].nameOrig,
-            path: [],
-            buses: [],
-            coords: [],
-            centre: [parseFloat(this.routes[i].longitude), parseFloat(this.routes[i].latitude)],
-            zoom: this.routes[i].distance,
-            active: true,
-            color: this.routes[i].color
-        };
-        if (this.routesReal[this.routes[i].nameOrig].short === null) {
-            this.routesReal[this.routes[i].nameOrig].short = "SP Route";
+
+        for (let i = 0; i < this.inactiveRoutes.length; i++) {
+            current.append(document.createElement("div"));
+            current.lastChild.className = routeItem;
+            current.lastChild.id = this.inactiveRoutes[i].nameOrig;
+            current.lastChild.innerHTML = this.inactiveRoutes[i].nameOrig + " | " + this.inactiveRoutes[i].shortName.toUpperCase();
+            current.lastChild.append(document.createElement('div'));
+            current.lastChild.lastChild.className = 'routeSelector';
+            let nam = this.inactiveRoutes[i].nameOrig;
+            current.lastChild.style.borderColor = this.inactiveRoutes[i].color;
+            let hihi = current.lastChild.lastChild;
+            let hi = current.lastChild;
+            hihi.addEventListener('click', function(e) { selectRoute(nam) }.bind(this));
+            hi.addEventListener("click", function(e) { if (hi === e.target) { showRoute(this.inactiveRoutes[i].nameOrig) } }.bind(this));
+            this.routesReal[this.inactiveRoutes[i].nameOrig] = {
+                id: this.inactiveRoutes[i].myid.toString(),
+                short: this.inactiveRoutes[i].shortName,
+                full: this.inactiveRoutes[i].nameOrig,
+                path: [],
+                buses: [],
+                coords: [],
+                centre: [parseFloat(this.inactiveRoutes[i].longitude), parseFloat(this.inactiveRoutes[i].latitude)],
+                zoom: this.inactiveRoutes[i].distance,
+                active: false,
+                color: this.inactiveRoutes[i].color
+            };
+            if (this.routesReal[this.inactiveRoutes[i].nameOrig].short === null) {
+                this.routesReal[this.inactiveRoutes[i].nameOrig].short = "SP Route";
+            }
         }
+
+        for (var el of document.getElementsByClassName('route')) {
+            el.onclick = function() {
+                $(el.lastChild).show();
+            }
+        }
+
+        this.routesLoaded = true;
+        console.log("loadRoutes function completed successfully");
+    } catch (error) {
+        console.error("Error in loadRoutes:", error);
+        throw error; // Re-throw the error to be caught in initialise
     }
-    for (let i = 0; i < this.inactiveRoutes.length; i++) {
-        current.append(document.createElement("div"));
-        current.lastChild.className = routeItem;
-        current.lastChild.id = this.inactiveRoutes[i].nameOrig;
-        current.lastChild.innerHTML = this.inactiveRoutes[i].nameOrig + " | " + this.inactiveRoutes[i].shortName.toUpperCase();
-        current.lastChild.append(document.createElement('div'));
-        current.lastChild.lastChild.className = 'routeSelector';
-        let nam = this.inactiveRoutes[i].nameOrig;
-        current.lastChild.style.borderColor = this.inactiveRoutes[i].color;
-        let hihi = current.lastChild.lastChild;
-        let hi = current.lastChild;
-        hihi.addEventListener('click', function(e) { selectRoute(nam) }.bind(this));
-        hi.addEventListener("click", function(e) { if (hi === e.target) { showRoute(this.inactiveRoutes[i].nameOrig) } }.bind(this));
-        this.routesReal[this.inactiveRoutes[i].nameOrig] = {
-            id: this.inactiveRoutes[i].myid.toString(),
-            short: this.inactiveRoutes[i].shortName,
-            full: this.inactiveRoutes[i].nameOrig,
-            path: [],
-            buses: [],
-            coords: [],
-            centre: [parseFloat(this.inactiveRoutes[i].longitude), parseFloat(this.inactiveRoutes[i].latitude)],
-            zoom: this.inactiveRoutes[i].distance,
-            active: false,
-            color: this.inactiveRoutes[i].color
-        };
-        if (this.routesReal[this.inactiveRoutes[i].nameOrig].short === null) {
-            this.routesReal[this.inactiveRoutes[i].nameOrig].short = "SP Route";
-        }
-    };
-    for (var el of document.getElementsByClassName('route')) {
-        el.onclick = function() {
-            $(el.lastChild).show();
-        }
-    }
-    this.routesLoaded = true;
 }
 
 function loadStops() {
