@@ -422,6 +422,7 @@ function updateBuses() {
     }
     for (var bussy of Object.keys(busesReal)) {
         if (!(Object.keys(this.routesReal).includes(this.busesReal[bussy].route))) {
+            console.warn(`Invalid route for bus ${bussy}: ${this.busesReal[bussy].route}`);
             continue;
         }
         var shortest = 1000;
@@ -460,7 +461,8 @@ function updateBuses() {
     }
 
     for (let bus of Object.keys(this.busesReal).toSorted()) {
-        if (!(Object.keys(this.routesReal).includes(this.busesReal[bussy].route))) {
+        if (!(Object.keys(this.routesReal).includes(this.busesReal[bus].route))) {
+            console.warn(`Invalid route for bus ${bus}: ${this.busesReal[bus].route}`);
             continue;
         }
         if (this.busesReal[bus].active && Object.keys(this.routesReal).includes(busesReal[bus].route)) {
@@ -1137,8 +1139,12 @@ var allLines = [];
 var madeLines = false;
 
 function getETA(route, speed, start, end, bus) {
-    if (!this.routesReal[route] || !this.routesReal[route].coords[start] || !this.routesReal[route].coords[end]) {
-        console.warn(`Invalid coordinates for route ${route}, start: ${start}, end: ${end}`);
+    if (!this.routesReal[route] || !this.routesReal[route].coords) {
+        console.warn(`Invalid route data for ${route}`);
+        return 0;
+    }
+    if (start === undefined || end === undefined || start >= this.routesReal[route].coords.length || end >= this.routesReal[route].coords.length) {
+        console.warn(`Invalid start/end points for route ${route}, start: ${start}, end: ${end}`);
         return 0;
     }
 
@@ -1157,9 +1163,8 @@ function getETA(route, speed, start, end, bus) {
             toRet = (turf.length(turf.lineString(this.routesReal[route].coords.slice(start, end + 1)), { units: 'kilometers' }) * 1000) / speed;
         }
     } catch (e) {
-        if (e.message == "coordinates must be an array of two or more positions") {
-            toRet = 0;
-        }
+        console.error("Error calculating ETA:", e);
+        toRet = 0;
     }
     return toRet;
 }
