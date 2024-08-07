@@ -642,113 +642,120 @@ function loadRoutes() {
 function loadStops() {
     console.log("Starting loadStops function");
 
-    this.setStops = {};
+    this.stopsReal = {};
+    this.stopsHashMap = {};
 
-    var keys = Object.keys(this.stops['routes']);
-    for (var i = 0; i < keys.length; i++) {
-        if (Object.keys(this.routesReal).includes(this.stops['routes'][keys[i]][0])) {
-            this.routesReal[this.stops['routes'][keys[i]][0]].path = this.stops['routes'][keys[i]].slice(2);
-        };
-    };
-    keys = Object.keys(this.stops['stops']);
-    console.log("Number of stops in this.stops['stops']:", keys.length);
-    for (var key of keys) {
-        for (var madeKey of Object.keys(stopsReal)) {
-            if (stopsReal.lat == this.stops['stops'][key]['latitude'] && stopsReal.long == this.stops['stops'][key]['longitude']) {
-                this.stopsReal[this.stops['stops']]
-            }
+    if (!this.stops || !this.stops['routes'] || !this.stops['stops']) {
+        console.error("Invalid stops data:", this.stops);
+        return;
+    }
+
+    var routeKeys = Object.keys(this.stops['routes']);
+    for (var i = 0; i < routeKeys.length; i++) {
+        var routeName = this.stops['routes'][routeKeys[i]][0];
+        if (this.routesReal && this.routesReal[routeName]) {
+            this.routesReal[routeName].path = this.stops['routes'][routeKeys[i]].slice(2);
+        } else {
+            console.warn("Route not found in routesReal:", routeName);
         }
-        this.stopsReal[this.stops['stops'][key]['name']] = {
-            id: this.stops['stops'][key]['id'],
-            lat: parseFloat(this.stops['stops'][key]['latitude']),
-            long: parseFloat(this.stops['stops'][key]['longitude']),
+    }
+
+    var stopKeys = Object.keys(this.stops['stops']);
+    console.log("Number of stops in this.stops['stops']:", stopKeys.length);
+
+    for (var key of stopKeys) {
+        var stopData = this.stops['stops'][key];
+        var stopName = stopData['name'];
+
+        this.stopsReal[stopName] = {
+            id: stopData['id'],
+            lat: parseFloat(stopData['latitude']),
+            long: parseFloat(stopData['longitude']),
             routes: [],
             buses: [],
-            full: this.stops['stops'][key]['name'],  //need to change this to full name
+            full: stopName,
             iAmThisPoint: {}
-        }
-        this.stopsHashMap[this.stops['stops'][key]['id']] = this.stops['stops'][key]['name'];
+        };
+
+        this.stopsHashMap[stopData['id']] = stopName;
     }
-    this.stopsOrdered = Object.keys(this.stopsReal);
-    this.stopsOrdered.sort();
-    keys = Object.keys(this.routesReal);
-    for (var key of keys) {
-        for (var i = 0; i < this.routesReal[key].path.length; i++) {
-            var currentStop = this.routesReal[key].path[i][1];
-            for (var j = 0; j < this.stopsOrdered.length; j++) {
-                var stopToEdit = this.stopsReal[this.stopsOrdered[j]].id;
-                if (stopToEdit === currentStop) {
-                    this.stopsReal[this.stopsOrdered[j]].routes.push(key);
-                }
+
+    this.stopsOrdered = Object.keys(this.stopsReal).sort();
+
+    console.log("Populating stop routes...");
+    for (var routeName of Object.keys(this.routesReal)) {
+        if (!this.routesReal[routeName].path) {
+            console.warn("No path for route:", routeName);
+            continue;
+        }
+        for (var i = 0; i < this.routesReal[routeName].path.length; i++) {
+            var stopId = this.routesReal[routeName].path[i][1];
+            var stopName = this.stopsHashMap[stopId];
+            if (this.stopsReal[stopName]) {
+                this.stopsReal[stopName].routes.push(routeName);
+            } else {
+                console.warn("Stop not found:", stopName);
             }
-        }
-    }
-    keys = Object.keys(this.routesReal);
-    console.info(Date.now());
-    for (var key of keys) {
-        var subkeys = Object.keys(this.stops.routePoints);
-        for (var subkey of subkeys) {
-            if (this.routesReal[key].id == subkey) {
-                for (var pointe of this.stops.routePoints[subkey]) {
-                    this.routesReal[key].coords.push([pointe.lng, pointe.lat]);
-                }
-            }
-        }
-        this.routesReal[key].stopIndices = {};
-        renderRoute(key);
-    }
-    var last = 0;
-    var shortest = Infinity;
-    var stopNum = 0;
-    for (var key of Object.keys(this.routesReal)) {
-        for (var stoppe of this.routesReal[key].path) {
-            var actual = stopsHashMap[stoppe[1]];
-            var hasSauce = false;
-            var stobbe = turf.point([this.stopsReal[actual].long, this.stopsReal[actual].lat]);
-            for (var i = last; i < this.routesReal[key].coords.length; i++) {
-                var cPoint = turf.point(this.routesReal[key].coords[i]);
-                var drist = turf.distance(stobbe, cPoint, { units: "kilometers" });
-                if (drist > 0.15) {
-                    if (hasSauce) {
-                        shortest = Infinity;
-                        hasSauce = false;
-                        break;
-                    }
-                    continue;
-                }
-                if (shortest < drist) {
-                    continue;
-                }
-                console.log(actual, i);
-                shortest = drist;
-                last = i;
-                if (Object.keys(this.stopsReal[actual].iAmThisPoint).includes(key)) {
-                    this.stopsReal[actual].iAmThisPoint[key + " again"] = i;
-                } else {
-                    this.stopsReal[actual].iAmThisPoint[key] = i;
-                }
-                hasSauce = true;
-            }
-        }
-        last = 0;
-        shortest = Infinity;
-        console.log(key)
-        for (var stoop of this.routesReal[key].path) {
-            var stooop = stopsHashMap[stoop[1]];
-            this.routesReal[key].stopIndices[this.stopsReal[stooop].iAmThisPoint[key]] = stooop;
-        }
-    }
-    console.log(this.routesReal);
-    console.log(Date.now());
-    for (var stop of Object.keys(this.stopsReal)) {
-        let stoppe = stopsReal[stop];
-        if (stoppe.long < -82.5 || stoppe.long > -82.3 || stoppe.lat > 27.9 || stoppe.lat < 28.2) {
-            delete stopsReal[stop];
         }
     }
 
+    console.log("Processing route points...");
+    for (var routeName of Object.keys(this.routesReal)) {
+        var routeId = this.routesReal[routeName].id;
+        if (this.stops.routePoints && this.stops.routePoints[routeId]) {
+            this.routesReal[routeName].coords = this.stops.routePoints[routeId].map(point => [point.lng, point.lat]);
+        } else {
+            console.warn("No route points for route:", routeName);
+        }
+        this.routesReal[routeName].stopIndices = {};
+        this.renderRoute(routeName);
+    }
+
+    console.log("Calculating stop indices...");
+    for (var routeName of Object.keys(this.routesReal)) {
+        for (var stopData of this.routesReal[routeName].path) {
+            var stopName = this.stopsHashMap[stopData[1]];
+            if (!stopName || !this.stopsReal[stopName]) {
+                console.warn("Invalid stop:", stopData[1]);
+                continue;
+            }
+
+            var stopPoint = turf.point([this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
+            var closestIndex = 0;
+            var shortestDistance = Infinity;
+
+            for (var i = 0; i < this.routesReal[routeName].coords.length; i++) {
+                var routePoint = turf.point(this.routesReal[routeName].coords[i]);
+                var distance = turf.distance(stopPoint, routePoint, { units: "kilometers" });
+                if (distance < shortestDistance) {
+                    shortestDistance = distance;
+                    closestIndex = i;
+                }
+            }
+
+            if (Object.keys(this.stopsReal[stopName].iAmThisPoint).includes(routeName)) {
+                this.stopsReal[stopName].iAmThisPoint[routeName + " again"] = closestIndex;
+            } else {
+                this.stopsReal[stopName].iAmThisPoint[routeName] = closestIndex;
+            }
+
+            this.routesReal[routeName].stopIndices[closestIndex] = stopName;
+        }
+    }
+
+    console.log("Filtering stops...");
+    for (var stopName of Object.keys(this.stopsReal)) {
+        let stop = this.stopsReal[stopName];
+        if (stop.long < -82.5 || stop.long > -82.3 || stop.lat > 27.9 || stop.lat < 28.2) {
+            delete this.stopsReal[stopName];
+            console.log("Removed stop outside bounds:", stopName);
+        }
+    }
+
+    this.stopsOrdered = Object.keys(this.stopsReal).sort();
+
     console.log("Number of stops loaded:", this.stopsOrdered.length);
-    console.log("stopsOrdered before setting stopsLoaded:", this.stopsOrdered);
+    console.log("stopsOrdered:", this.stopsOrdered);
     console.log("stopsReal object:", this.stopsReal);
 
     this.stopsLoaded = true;
