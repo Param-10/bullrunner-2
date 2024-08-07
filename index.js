@@ -644,6 +644,7 @@ function loadStops() {
         };
     };
     keys = Object.keys(this.stops['stops']);
+    console.log("Number of stops in this.stops['stops']:", keys.length);
     for (var key of keys) {
         for (var madeKey of Object.keys(stopsReal)) {
             if (stopsReal.lat == this.stops['stops'][key]['latitude'] && stopsReal.long == this.stops['stops'][key]['longitude']) {
@@ -656,7 +657,7 @@ function loadStops() {
             long: parseFloat(this.stops['stops'][key]['longitude']),
             routes: [],
             buses: [],
-            full: this.stops['stops'][key]['name'],
+            full: this.stops['stops'][key]['name'],  //need to change this to full name
             iAmThisPoint: {}
         }
         this.stopsHashMap[this.stops['stops'][key]['id']] = this.stops['stops'][key]['name'];
@@ -739,29 +740,39 @@ function loadStops() {
         }
     }
 
+    console.log("Number of stops loaded:", this.stopsOrdered.length);
+    console.log("stopsOrdered before setting stopsLoaded:", this.stopsOrdered);
+    console.log("stopsReal object:", this.stopsReal);
+
     this.stopsLoaded = true;
-    this.stopsLoaded = true;
-    console.log("loadStops function completed, stopsLoaded set to true")
+    console.log("loadStops function completed, stopsLoaded set to true");
+
+    if (map.loaded()) {
+        console.log("Map loaded, calling renderAllStops from loadStops");
+        this.renderAllStops();
+    }
 }
 
-function renderAllStops() {
+renderAllStops = () => {
     console.log("renderAllStops function called");
-    console.log("Number of stops to render:", this.stopsOrdered.length);
+    console.log("this object:", this);
+    console.log("Number of stops to render:", this.stopsOrdered ? this.stopsOrdered.length : 0);
+    console.log("stopsReal object:", this.stopsReal);
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
     }
     for (var stoppe of this.stopsOrdered) {
         console.log("Attempting to render stop:", stoppe);
+        console.log("Stop data:", this.stopsReal[stoppe]);
         if (this.stopsReal[stoppe] && this.stopsReal[stoppe].routes) {
-            this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
+            this.renderCircle(this.stopsReal[stoppe].routes, stoppe);
         } else {
             console.error("Invalid stop data for:", stoppe);
         }
     }
     console.log("Finished renderAllStops function");
-    renderAllStops.call(this);
-    checkStopMarkersInView();
+    this.checkStopMarkersInView();
 }
 
 function loadAlerts() {
