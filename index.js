@@ -721,16 +721,15 @@ function loadStops() {
 
 function renderAllStops() {
     console.log("Rendering all stops");
+    console.log("stopsReal object:", Object.keys(this.stopsReal).length);
+    console.log("stopsOrdered array:", this.stopsOrdered.length);
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
     }
     for (var stoppe of this.stopsOrdered) {
-        if (this.stopsReal[stoppe] && this.stopsReal[stoppe].routes) {
-            this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
-        } else {
-            console.error("Invalid stop data for:", stoppe);
-        }
+        console.log("Attempting to render stop:", stoppe);
+        this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
     }
     checkStopMarkersInView();
 }
@@ -1065,11 +1064,11 @@ function showStopOnMap(stopName) {
     $("#stopsList").hide();
     $("#routesList").hide();
 
-    // Log the stopName and this.stopsReal[stopName]
+
     console.log("stopName:", stopName);
     console.log("this.stopsReal[stopName]:", this.stopsReal[stopName]);
 
-    // Check if this.stopsReal[stopName] is defined
+    
     if (this.stopsReal[stopName]) {
         map.setCenter([this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
         map.setZoom(16);
