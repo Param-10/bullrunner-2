@@ -127,15 +127,27 @@ async function initialise() {
       });
     console.log("Mapbox GL JS version:", mapboxgl.version);
     map.on('load', () => {
-        console.log("Map fully loaded event triggered");
+        console.log("Map 'load' event fired");
         console.log("stopsLoaded value:", this.stopsLoaded);
         if (this.stopsLoaded) {
-            console.log("Stops are loaded, calling renderAllStops");
-            renderAllStops.call(this);
+          console.log("Calling renderAllStops");
+          this.renderAllStops();
         } else {
-            console.log("Stops are not loaded yet");
+          console.log("Stops not loaded yet");
         }
-    });
+      });
+
+      if (map.loaded()) {
+        console.log("Map already loaded, calling renderAllStops immediately");
+        this.renderAllStops();
+      }
+
+      setTimeout(() => {
+        if (this.stopsLoaded && this.stopMarkers.length === 0) {
+          console.log("Calling renderAllStops after timeout");
+          this.renderAllStops();
+        }
+      }, 5000);
 }
 
 function setStops(what) {
