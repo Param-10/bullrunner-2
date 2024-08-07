@@ -43,7 +43,6 @@ function failure() {
 async function initialise() {
     this.renderAllStops = this.renderAllStops.bind(this);
 
-
     document.getElementById('busSearch').addEventListener('input', function(event) { filterBuses(event.data) });
     document.getElementById('stopSearch').addEventListener('input', function(event) { filterStops(event.data) });
     $.ajaxSetup({
@@ -640,6 +639,9 @@ function loadRoutes() {
 
 function loadStops() {
     console.log("Starting loadStops function");
+
+    this.setStops = {};
+
     var keys = Object.keys(this.stops['routes']);
     for (var i = 0; i < keys.length; i++) {
         if (Object.keys(this.routesReal).includes(this.stops['routes'][keys[i]][0])) {
