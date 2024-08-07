@@ -643,6 +643,7 @@ function loadStops() {
     console.log("Starting loadStops function");
 
     this.stopsReal = {};
+    this.stopsOrdered = [];
     this.stopsHashMap = {};
 
     if (!this.stops || !this.stops['routes'] || !this.stops['stops']) {
@@ -678,9 +679,8 @@ function loadStops() {
         };
 
         this.stopsHashMap[stopData['id']] = stopName;
+        this.stopsOrdered.push(stopName);
     }
-
-    this.stopsOrdered = Object.keys(this.stopsReal).sort();
 
     console.log("Populating stop routes...");
     for (var routeName of Object.keys(this.routesReal)) {
@@ -756,7 +756,7 @@ function loadStops() {
 
     console.log("Number of stops loaded:", this.stopsOrdered.length);
     console.log("stopsOrdered:", this.stopsOrdered);
-    console.log("stopsReal object:", this.stopsReal);
+    console.log("Sample stop data:", this.stopsReal[this.stopsOrdered[0]]);
 
     this.stopsLoaded = true;
     console.log("loadStops function completed, stopsLoaded set to true");
@@ -1196,11 +1196,14 @@ var allLines = [];
 var madeLines = false;
 
 function getETA(route, speed, start, end, bus) {
+    console.log(`getETA called for bus ${bus}: route=${route}, start=${start}, end=${end}`);
     if (!this.routesReal[route] || !this.routesReal[route].coords) {
         console.error("Invalid route data for:", route);
         return 0;
     }
-    if (start === undefined || end === undefined || start < 0 || end < 0 || start >= this.routesReal[route].coords.length || end >= this.routesReal[route].coords.length) {
+    if (start === undefined || end === undefined || start < 0 || end < 0 || 
+        start >= this.routesReal[route].coords.length || 
+        end >= this.routesReal[route].coords.length) {
         console.error("Invalid start or end for bus:", bus, "start:", start, "end:", end);
         return 0;
     }
