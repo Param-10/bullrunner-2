@@ -34,10 +34,10 @@ function stillLoading() { alert(this.errorMessage) };
 
 var deviceId = (Math.floor(Math.random() * (10 ** 8))).toString()
 
-function failure(error) {
+function failure() {
     $("#status").show();
-    this.errorMessage = 'An error occurred: ' + (error ? error.message : 'Unknown error');
-    document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>Error Details</h3></br>${this.errorMessage}</div>`;
+    this.errorMessage = 'Passio servers dead, ggwp :(';
+    document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>We Don't Know Why</h3></br>But basically their service is down.</div>`;
 }
 
 async function initialise() {
@@ -51,60 +51,103 @@ async function initialise() {
         error: function(xhr) {
             this.errorMessage = ("Timed Out. Passio dead :(");
         }
-    });
-
+    })
     let tempScope = this;
     document.getElementById('routesButton').addEventListener('click', stillLoading.bind(tempScope));
     document.getElementById('stopsButton').addEventListener('click', stillLoading.bind(tempScope));
     document.getElementById('alertsButton').addEventListener('click', stillLoading.bind(tempScope));
     document.getElementById('busesButton').addEventListener('click', stillLoading.bind(tempScope));
 
-    try {
-        await Promise.all([
-            this.loadRoutes(),
-            this.loadStops(),
-            this.loadAlerts(),
-            this.loadBuses(),
-            new Promise(resolve => {
-                if (map.loaded()) {
-                    resolve();
-                } else {
-                    map.on('load', resolve);
-                }
-            })
-        ]);
+    await $.post("https://passio3.com/www/mapGetData.php?getRoutes=1&deviceId=" + deviceId + "&wTransloc=1", { json: '{"systemSelected0":"2343","amount":1}' },
+        function(data) {
+            if (Object.keys(JSON.parse(data)).length === 1) {
+                this.errorMessage = "Passio servers dead, ggwp :(";
+                document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
+                throw new Error("Passio Gone")
+            }
+            setRoutes(JSON.parse(data));
+            loadRoutes();
+        }.bind(this)).fail(failure.bind(this));
+    await $.post("https://passio3.com/www/mapGetData.php?getStops=1&deviceId=" + deviceId + "&wTransloc=1", { json: '{"s0":"2343","sA":1}' },
+        function(data) {
+            if (Object.keys(JSON.parse(data)).length === 1) {
+                this.errorMessage = "Passio servers dead, ggwp :(";
+                document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
+                throw new Error("Passio Gone");
+            }
+            setStops(JSON.parse(data));
+            loadStops();
+        }.bind(this)).fail(failure.bind(this));
+    await $.post("https://passio3.com/www/goServices.php?getAlertMessages=1&deviceId=" + deviceId, { json: '{"systemSelected0":"2343", "amount":1}' },
+        function(data) {
+            if (Object.keys(JSON.parse(data)).length === 1) {
+                this.errorMessage = "Passio servers dead, ggwp :(";
+                document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
+                throw new Error("Passio Gone");
+            }
+            setAlerts(JSON.parse(data));
+            loadAlerts();
+        }.bind(this)).fail(failure.bind(this));
+    await $.post("https://passio3.com/www/mapGetData.php?getBuses=1&deviceId=" + deviceId + "&wTransloc=1", { json: '{"s0":"2343","sA":1}' },
+        function(data) {
+            if (Object.keys(JSON.parse(data)).length === 1) {
+                this.errorMessage = "Passio servers dead, ggwp :(";
+                document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
+                throw new Error("Passio Gone");
+            }
+            setBusesFirst.call(this, JSON.parse(data));
+        }.bind(this)).fail(failure.bind(this));
 
-        console.log("All data loaded and map is ready");
-    } catch (error) {
-        console.error("Error during initialization:", error);
-        this.failure(error);
-        return;
+    document.getElementById('routesButton').replaceWith(document.getElementById('routesButton').cloneNode(true));
+    document.getElementById('stopsButton').replaceWith(document.getElementById('stopsButton').cloneNode(true));
+    document.getElementById('busesButton').replaceWith(document.getElementById('busesButton').cloneNode(true));
+    document.getElementById('alertsButton').replaceWith(document.getElementById('alertsButton').cloneNode(true));
+    document.getElementById('routesButton').addEventListener('click', openRoutes.bind(this));
+    document.getElementById('stopsButton').addEventListener('click', openStops.bind(this));
+    document.getElementById('alertsButton').addEventListener('click', openAlerts.bind(this));
+    document.getElementById('busesButton').addEventListener('click', openBuses.bind(this));
+
+    var userAgent = navigator.userAgent;
+    if (userAgent.includes('iPhone') || userAgent.includes('iPad') || userAgent.includes('Android')) {
+        $("#stylesheet").attr("href", "styleMobile.css");
+        console.info("mobile");
+    } else {
+        console.info("pc");
     }
-
-    this.setupEventListeners();
-    this.setupMobileCheck();
-
-    map.on('zoomend', this.fixSizes.bind(this));
+    map.on('zoomend', fixSizes.bind(this));
     $("#status").hide();
 
     console.log("Initial map center:", map.getCenter(), "zoom:", map.getZoom());
+    map.on('style.load', () => {
+        console.log("Map style fully loaded");
+        if (this.stopsLoaded) {
+          console.log("Calling renderAllStops");
+          renderAllStops.call(this);
+        } else {
+          console.log("Stops not loaded yet");
+        }
+      });
     console.log("Mapbox GL JS version:", mapboxgl.version);
-
-    if (this.stopsLoaded && map.isStyleLoaded()) {
-        console.log("Calling renderAllStops immediately");
-        this.renderAllStops();
-    } else {
-        console.log("Waiting for map style to load before rendering stops");
-        map.once('styledata', () => {
-            if (this.stopsLoaded) {
+    map.on('load', () => {
+        console.log("Map 'load' event fired");
+        console.log("stopsLoaded value:", this.stopsLoaded);
+        if (this.stopsLoaded) {
+            console.log("Calling renderAllStops from map load event");
+            setTimeout(() => {
                 this.renderAllStops();
-            } else {
-                console.error("Stops not loaded when map style finished loading");
-            }
-        });
+            }, 100);
+        } else {
+            console.log("Stops not loaded yet when map load event fired");
+        }
+    });
+
+    if (map.loaded()) {
+        console.log("Map already loaded, calling renderAllStops immediately");
+        setTimeout(() => {
+            this.renderAllStops();
+        }, 100);
     }
 
-    // Fallback timeout
     setTimeout(() => {
         console.log("Timeout reached. stopsLoaded:", this.stopsLoaded, "stopMarkers length:", this.stopMarkers ? this.stopMarkers.length : 0);
         if (this.stopsLoaded && (!this.stopMarkers || this.stopMarkers.length === 0)) {
@@ -511,119 +554,92 @@ function showBusDetails(which) {
     busMarkers[which][0].getElement().lastChild.style.display = "inline-block";
 }
 
-async function loadRoutes() {
-    console.log("Starting loadRoutes function");
-    try {
-        const response = await $.post("https://passio3.com/www/mapGetData.php?getRoutes=1&deviceId=" + deviceId + "&wTransloc=1", 
-            { json: '{"systemSelected0":"2343","amount":1}' }
-        );
-        
-        const data = JSON.parse(response);
-        if (Object.keys(data).length === 1 && data.error) {
-            throw new Error("Passio servers returned an error: " + data.error);
-        }
-        
-        this.setRoutes(data);
-        
-        if (!this.routes || !Array.isArray(this.routes)) {
-            throw new Error("Invalid routes data received");
-        }
-
-        console.log("Routes data received:", this.routes);
-
-        let current = $("#routesList").find('[class="popupList"]')[0];
-        var temp = [];
-        this.routes.sort((a, b) => a.nameOrig.localeCompare(b.nameOrig));
-
-        for (var i = 0; i < this.routes.length; i++) {
-            if (!(excludeMyIDs.includes(this.routes[i].myid))) {
-                if (Object.keys(this.routes[i]).includes("serviceTime")) {
-                    this.inactiveRoutes.push(this.routes[i]);
-                } else {
-                    temp.push(this.routes[i]);
-                }
+function loadRoutes() {
+    let current = $("#routesList").find('[class="popupList"]')[0];
+    var temp = [];
+    this.routes.sort(function(a, b) {
+        return a['nameOrig'].localeCompare(b['nameOrig']);
+    });
+    for (var i = 0; i < this.routes.length; i++) {
+        if (!(excludeMyIDs.includes(this.routes[i].myid))) {
+            if (Object.keys(this.routes[i]).includes("serviceTime")) {
+                this.inactiveRoutes.push(this.routes[i]);
+            } else {
+                temp.push(this.routes[i]);
             }
         }
-        this.routes = temp;
-
-        for (let i = 0; i < this.routes.length; i++) {
-            current.append(document.createElement("div"));
-            current.lastChild.className = routeItem;
-            current.lastChild.id = this.routes[i].nameOrig;
-            try {
-                current.lastChild.innerHTML = this.routes[i].nameOrig + " | " + this.routes[i].shortName.toUpperCase();
-            } catch (e) {
-                if (e instanceof TypeError) {
-                    current.lastChild.innerHTML = this.routes[i].nameOrig + " | Special Route";
-                }
-            }
-            current.lastChild.append(document.createElement('div'));
-            current.lastChild.lastChild.className = 'routeSelector';
-            let nam = this.routes[i].nameOrig;
-            current.lastChild.style.borderColor = this.routes[i].color;
-            let hihi = current.lastChild.lastChild;
-            let hi = current.lastChild;
-            hihi.addEventListener('click', function(e) { selectRoute(nam) }.bind(this));
-            hi.addEventListener("click", function(e) { if (hi === e.target) { showRoute(this.routes[i].nameOrig) } }.bind(this));
-            this.routesReal[this.routes[i].nameOrig] = {
-                id: this.routes[i].myid.toString(),
-                short: this.routes[i].shortName,
-                full: this.routes[i].nameOrig,
-                path: [],
-                buses: [],
-                coords: [],
-                centre: [parseFloat(this.routes[i].longitude), parseFloat(this.routes[i].latitude)],
-                zoom: this.routes[i].distance,
-                active: true,
-                color: this.routes[i].color
-            };
-            if (this.routesReal[this.routes[i].nameOrig].short === null) {
-                this.routesReal[this.routes[i].nameOrig].short = "SP Route";
-            }
-        }
-
-        for (let i = 0; i < this.inactiveRoutes.length; i++) {
-            current.append(document.createElement("div"));
-            current.lastChild.className = routeItem;
-            current.lastChild.id = this.inactiveRoutes[i].nameOrig;
-            current.lastChild.innerHTML = this.inactiveRoutes[i].nameOrig + " | " + this.inactiveRoutes[i].shortName.toUpperCase();
-            current.lastChild.append(document.createElement('div'));
-            current.lastChild.lastChild.className = 'routeSelector';
-            let nam = this.inactiveRoutes[i].nameOrig;
-            current.lastChild.style.borderColor = this.inactiveRoutes[i].color;
-            let hihi = current.lastChild.lastChild;
-            let hi = current.lastChild;
-            hihi.addEventListener('click', function(e) { selectRoute(nam) }.bind(this));
-            hi.addEventListener("click", function(e) { if (hi === e.target) { showRoute(this.inactiveRoutes[i].nameOrig) } }.bind(this));
-            this.routesReal[this.inactiveRoutes[i].nameOrig] = {
-                id: this.inactiveRoutes[i].myid.toString(),
-                short: this.inactiveRoutes[i].shortName,
-                full: this.inactiveRoutes[i].nameOrig,
-                path: [],
-                buses: [],
-                coords: [],
-                centre: [parseFloat(this.inactiveRoutes[i].longitude), parseFloat(this.inactiveRoutes[i].latitude)],
-                zoom: this.inactiveRoutes[i].distance,
-                active: false,
-                color: this.inactiveRoutes[i].color
-            };
-            if (this.routesReal[this.inactiveRoutes[i].nameOrig].short === null) {
-                this.routesReal[this.inactiveRoutes[i].nameOrig].short = "SP Route";
-            }
-        }
-
-        for (var el of document.getElementsByClassName('route')) {
-            el.onclick = function() {
-                $(el.lastChild).show();
-            }
-        }
-
-        this.routesLoaded = true;
-        console.log("loadRoutes function completed successfully");
-    } catch (error) {
-        console.error("Error in loadRoutes:", error);
-        throw error; // Re-throw the error to be caught in initialise
     }
+    this.routes = temp;
+    for (let i = 0; i < this.routes.length; i++) {
+        current.append(document.createElement("div"));
+        current.lastChild.className = routeItem;
+        current.lastChild.id = this.routes[i].nameOrig;
+        try {
+            current.lastChild.innerHTML = this.routes[i].nameOrig + " | " + this.routes[i].shortName.toUpperCase();
+        } catch (e) {
+            if (e instanceof TypeError) {
+                current.lastChild.innerHTML = this.routes[i].nameOrig + " | Special Route";
+            }
+        }
+        current.lastChild.append(document.createElement('div'));
+        current.lastChild.lastChild.className = 'routeSelector';
+        let nam = this.routes[i].nameOrig;
+        current.lastChild.style.borderColor = this.routes[i].color;
+        let hihi = current.lastChild.lastChild;
+        let hi = current.lastChild;
+        hihi.addEventListener('click', function(e) { selectRoute(nam) }.bind(this));
+        hi.addEventListener("click", function(e) { if (hi === e.target) { showRoute(this.routes[i].nameOrig) } }.bind(this));
+        this.routesReal[this.routes[i].nameOrig] = {
+            id: this.routes[i].myid.toString(),
+            short: this.routes[i].shortName,
+            full: this.routes[i].nameOrig,
+            path: [],
+            buses: [],
+            coords: [],
+            centre: [parseFloat(this.routes[i].longitude), parseFloat(this.routes[i].latitude)],
+            zoom: this.routes[i].distance,
+            active: true,
+            color: this.routes[i].color
+        };
+        if (this.routesReal[this.routes[i].nameOrig].short === null) {
+            this.routesReal[this.routes[i].nameOrig].short = "SP Route";
+        }
+    }
+    for (let i = 0; i < this.inactiveRoutes.length; i++) {
+        current.append(document.createElement("div"));
+        current.lastChild.className = routeItem;
+        current.lastChild.id = this.inactiveRoutes[i].nameOrig;
+        current.lastChild.innerHTML = this.inactiveRoutes[i].nameOrig + " | " + this.inactiveRoutes[i].shortName.toUpperCase();
+        current.lastChild.append(document.createElement('div'));
+        current.lastChild.lastChild.className = 'routeSelector';
+        let nam = this.inactiveRoutes[i].nameOrig;
+        current.lastChild.style.borderColor = this.inactiveRoutes[i].color;
+        let hihi = current.lastChild.lastChild;
+        let hi = current.lastChild;
+        hihi.addEventListener('click', function(e) { selectRoute(nam) }.bind(this));
+        hi.addEventListener("click", function(e) { if (hi === e.target) { showRoute(this.inactiveRoutes[i].nameOrig) } }.bind(this));
+        this.routesReal[this.inactiveRoutes[i].nameOrig] = {
+            id: this.inactiveRoutes[i].myid.toString(),
+            short: this.inactiveRoutes[i].shortName,
+            full: this.inactiveRoutes[i].nameOrig,
+            path: [],
+            buses: [],
+            coords: [],
+            centre: [parseFloat(this.inactiveRoutes[i].longitude), parseFloat(this.inactiveRoutes[i].latitude)],
+            zoom: this.inactiveRoutes[i].distance,
+            active: false,
+            color: this.inactiveRoutes[i].color
+        };
+        if (this.routesReal[this.inactiveRoutes[i].nameOrig].short === null) {
+            this.routesReal[this.inactiveRoutes[i].nameOrig].short = "SP Route";
+        }
+    };
+    for (var el of document.getElementsByClassName('route')) {
+        el.onclick = function() {
+            $(el.lastChild).show();
+        }
+    }
+    this.routesLoaded = true;
 }
 
 function loadStops() {
@@ -745,33 +761,18 @@ function renderAllStops() {
     console.log("renderAllStops function called");
     console.log("this object:", this);
     console.log("Number of stops to render:", this.stopsOrdered ? this.stopsOrdered.length : 0);
-
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
     }
-
-    if (!map.isStyleLoaded()) {
-        console.log("Map style not fully loaded, waiting...");
-        map.once('styledata', this.renderAllStops.bind(this));
-        return;
-    }
-
-    this.stopMarkers = this.stopMarkers || [];
-
-    this.stopsOrdered.forEach(stoppe => {
+    for (var stoppe of this.stopsOrdered) {
         console.log("Attempting to render stop:", stoppe);
         if (this.stopsReal[stoppe] && this.stopsReal[stoppe].routes) {
-            try {
-                this.renderCircle(this.stopsReal[stoppe].routes, stoppe);
-            } catch (error) {
-                console.error("Error rendering stop:", stoppe, error);
-            }
+            this.renderCircle(this.stopsReal[stoppe].routes, stoppe);
         } else {
             console.error("Invalid stop data for:", stoppe);
         }
-    });
-
+    }
     console.log("Finished renderAllStops function");
     this.checkStopMarkersInView();
 }
@@ -997,6 +998,7 @@ var stopMarkers = []
 function renderCircle(routeList, stopName) {
     console.log("Beginning renderCircle for stop:", stopName);
     console.log("Route list for this stop:", routeList);
+    console.log("Stop data:", this.stopsReal[stopName]);
 
     if (!this.stopsReal[stopName]) {
         console.error("Stop not found in stopsReal:", stopName);
@@ -1011,7 +1013,14 @@ function renderCircle(routeList, stopName) {
     console.log("Stop data:", this.stopsReal[stopName]);
     console.log("Creating marker for stop:", stopName, "at position:", [this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
 
-    let routList = routeList.filter(route => this.routesReal[route] && this.routesReal[route].active);
+    let routList = [];
+    let bruhMoment = JSON.parse(JSON.stringify(this.routesReal));
+    for (var routte of routeList) {
+        var hello = bruhMoment[routte].active;
+        if (hello) {
+            routList.push(routte);
+        }
+    }
     console.log("Active routes for this stop:", routList);
 
     let svg = document.createElement('div');
@@ -1019,13 +1028,13 @@ function renderCircle(routeList, stopName) {
     svg.id = 'stop: ' + stopName;
     let inner = '';
     if (routList.length > 0) {
-        routList.forEach((route, i) => {
-            inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill="${this.routesReal[route].color}" stroke="#FFFFFF" stroke-width="0.3em">\n`;
+        for (var i = 0; i < routList.length; i++) {
+            inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill= "${bruhMoment[routList[i]].color}" stroke="#FFFFFF" stroke-width="0.3em">\n`
             inner += "<path d='" + arc({ x: 0, y: 0, r: 50, start: ((360 / routList.length) * i), end: ((360 / routList.length) * (i + 1)) }) + "'></path>\n";
             inner += '</svg>\n';
-        });
+        }
     } else {
-        inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill="#888888" stroke="#FFFFFF" stroke-width="0.3em">\n`;
+        inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill= "#888888" stroke="#FFFFFF" stroke-width="0.3em">\n`
         inner += "<path d='" + arc({ x: 0, y: 0, r: 50 }) + "'></path>\n";
         inner += '</svg>\n';
     }
@@ -1034,7 +1043,7 @@ function renderCircle(routeList, stopName) {
 
     svg.addEventListener('click', () => { 
         console.log("Stop marker clicked:", stopName);
-        this.showStopDetails(stopName); 
+        showStopDetails(stopName); 
     });
 
     try {
