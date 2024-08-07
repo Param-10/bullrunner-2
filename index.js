@@ -41,6 +41,8 @@ function failure() {
 }
 
 async function initialise() {
+    javascriptCopythis.renderAllStops = this.renderAllStops.bind(this);
+
     document.getElementById('busSearch').addEventListener('input', function(event) { filterBuses(event.data) });
     document.getElementById('stopSearch').addEventListener('input', function(event) { filterStops(event.data) });
     $.ajaxSetup({
@@ -130,24 +132,25 @@ async function initialise() {
         console.log("Map 'load' event fired");
         console.log("stopsLoaded value:", this.stopsLoaded);
         if (this.stopsLoaded) {
-          console.log("Calling renderAllStops");
-          this.renderAllStops();
+            console.log("Calling renderAllStops from map load event");
+            this.renderAllStops();
         } else {
-          console.log("Stops not loaded yet");
+            console.log("Stops not loaded yet when map load event fired");
         }
-      });
+    });
 
-      if (map.loaded()) {
+    if (map.loaded()) {
         console.log("Map already loaded, calling renderAllStops immediately");
         this.renderAllStops();
-      }
+    }
 
-      setTimeout(() => {
-        if (this.stopsLoaded && this.stopMarkers.length === 0) {
-          console.log("Calling renderAllStops after timeout");
-          this.renderAllStops();
+    setTimeout(() => {
+        console.log("Timeout reached. stopsLoaded:", this.stopsLoaded, "stopMarkers length:", this.stopMarkers ? this.stopMarkers.length : 0);
+        if (this.stopsLoaded && (!this.stopMarkers || this.stopMarkers.length === 0)) {
+            console.log("Calling renderAllStops after timeout");
+            this.renderAllStops();
         }
-      }, 5000);
+    }, 5000);
 }
 
 function setStops(what) {
@@ -741,12 +744,12 @@ function loadStops() {
 
     this.stopsLoaded = true;
     this.stopsLoaded = true;
-    console.log("loadStops function completed, stopsLoaded set to true")
+    console.log("loadStops function completed, stopsLoaded set to true");
 }
 
 function renderAllStops() {
     console.log("renderAllStops function called");
-    console.log("Number of stops to render:", this.stopsOrdered.length);
+    console.log("Number of stops to render:", this.stopsOrdered ? this.stopsOrdered.length : 0);
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
@@ -754,14 +757,13 @@ function renderAllStops() {
     for (var stoppe of this.stopsOrdered) {
         console.log("Attempting to render stop:", stoppe);
         if (this.stopsReal[stoppe] && this.stopsReal[stoppe].routes) {
-            this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
+            this.renderCircle(this.stopsReal[stoppe].routes, stoppe);
         } else {
             console.error("Invalid stop data for:", stoppe);
         }
     }
     console.log("Finished renderAllStops function");
-    renderAllStops.call(this);
-    checkStopMarkersInView();
+    this.checkStopMarkersInView();
 }
 
 function loadAlerts() {
