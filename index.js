@@ -41,6 +41,8 @@ function failure() {
 }
 
 async function initialise() {
+    this.renderAllStops = this.renderAllStops.bind(this);
+
     document.getElementById('busSearch').addEventListener('input', function(event) { filterBuses(event.data) });
     document.getElementById('stopSearch').addEventListener('input', function(event) { filterStops(event.data) });
     $.ajaxSetup({
@@ -142,12 +144,12 @@ async function initialise() {
         this.renderAllStops();
       }
 
-      setTimeout(() => {
-        if (this.stopsLoaded && this.stopMarkers.length === 0) {
-          console.log("Calling renderAllStops after timeout");
-          this.renderAllStops();
-        }
-      }, 5000);
+      if (map.loaded()) {
+        console.log("Map loaded, calling renderAllStops from loadStops");
+        setTimeout(() => {
+            this.renderAllStops();
+        }, 100);
+    }
 }
 
 function setStops(what) {
@@ -635,35 +637,42 @@ function loadRoutes() {
     this.routesLoaded = true;
 }
 
+
 function loadStops() {
     console.log("Starting loadStops function");
+    
+    // Initialize stopsReal as an empty object
+    this.stopsReal = {};
+    
     var keys = Object.keys(this.stops['routes']);
     for (var i = 0; i < keys.length; i++) {
         if (Object.keys(this.routesReal).includes(this.stops['routes'][keys[i]][0])) {
             this.routesReal[this.stops['routes'][keys[i]][0]].path = this.stops['routes'][keys[i]].slice(2);
-        };
-    };
+        }
+    }
+    
     keys = Object.keys(this.stops['stops']);
     console.log("Number of stops in this.stops['stops']:", keys.length);
+    
     for (var key of keys) {
-        for (var madeKey of Object.keys(stopsReal)) {
-            if (stopsReal.lat == this.stops['stops'][key]['latitude'] && stopsReal.long == this.stops['stops'][key]['longitude']) {
-                this.stopsReal[this.stops['stops']]
-            }
-        }
         this.stopsReal[this.stops['stops'][key]['name']] = {
             id: this.stops['stops'][key]['id'],
             lat: parseFloat(this.stops['stops'][key]['latitude']),
             long: parseFloat(this.stops['stops'][key]['longitude']),
             routes: [],
             buses: [],
-            full: this.stops['stops'][key]['name'],  //need to change this to full name
+            full: this.stops['stops'][key]['name'],
             iAmThisPoint: {}
-        }
+        };
         this.stopsHashMap[this.stops['stops'][key]['id']] = this.stops['stops'][key]['name'];
     }
+    
+    console.log("stopsReal after population:", this.stopsReal);
+    
     this.stopsOrdered = Object.keys(this.stopsReal);
     this.stopsOrdered.sort();
+    console.log("stopsOrdered after setting:", this.stopsOrdered);
+    
     keys = Object.keys(this.routesReal);
     for (var key of keys) {
         for (var i = 0; i < this.routesReal[key].path.length; i++) {
@@ -676,8 +685,7 @@ function loadStops() {
             }
         }
     }
-    keys = Object.keys(this.routesReal);
-    console.info(Date.now());
+    
     for (var key of keys) {
         var subkeys = Object.keys(this.stops.routePoints);
         for (var subkey of subkeys) {
@@ -688,14 +696,18 @@ function loadStops() {
             }
         }
         this.routesReal[key].stopIndices = {};
-        renderRoute(key);
+        this.renderRoute(key);
     }
+    
     var last = 0;
     var shortest = Infinity;
-    var stopNum = 0;
     for (var key of Object.keys(this.routesReal)) {
         for (var stoppe of this.routesReal[key].path) {
-            var actual = stopsHashMap[stoppe[1]];
+            var actual = this.stopsHashMap[stoppe[1]];
+            if (!actual) {
+                console.error("Stop not found in stopsHashMap:", stoppe[1]);
+                continue;
+            }
             var hasSauce = false;
             var stobbe = turf.point([this.stopsReal[actual].long, this.stopsReal[actual].lat]);
             for (var i = last; i < this.routesReal[key].coords.length; i++) {
@@ -712,7 +724,6 @@ function loadStops() {
                 if (shortest < drist) {
                     continue;
                 }
-                console.log(actual, i);
                 shortest = drist;
                 last = i;
                 if (Object.keys(this.stopsReal[actual].iAmThisPoint).includes(key)) {
@@ -725,39 +736,33 @@ function loadStops() {
         }
         last = 0;
         shortest = Infinity;
-        console.log(key)
         for (var stoop of this.routesReal[key].path) {
-            var stooop = stopsHashMap[stoop[1]];
-            this.routesReal[key].stopIndices[this.stopsReal[stooop].iAmThisPoint[key]] = stooop;
+            var stooop = this.stopsHashMap[stoop[1]];
+            if (stooop && this.stopsReal[stooop] && this.stopsReal[stooop].iAmThisPoint[key] !== undefined) {
+                this.routesReal[key].stopIndices[this.stopsReal[stooop].iAmThisPoint[key]] = stooop;
+            }
         }
     }
-    console.log(this.routesReal);
-    console.log(Date.now());
-    for (var stop of Object.keys(this.stopsReal)) {
-        let stoppe = stopsReal[stop];
-        if (stoppe.long < -82.5 || stoppe.long > -82.3 || stoppe.lat > 27.9 || stoppe.lat < 28.2) {
-            delete stopsReal[stop];
-        }
-    }
-
-    console.log("Number of stops loaded:", this.stopsOrdered.length);
-    console.log("stopsOrdered before setting stopsLoaded:", this.stopsOrdered);
-    console.log("stopsReal object:", this.stopsReal);
-
+    
+    console.log("routesReal after processing:", this.routesReal);
+    console.log("Final stopsReal:", this.stopsReal);
+    console.log("Final stopsOrdered:", this.stopsOrdered);
+    
     this.stopsLoaded = true;
     console.log("loadStops function completed, stopsLoaded set to true");
-
+    
     if (map.loaded()) {
         console.log("Map loaded, calling renderAllStops from loadStops");
-        this.renderAllStops();
+        setTimeout(() => {
+            this.renderAllStops();
+        }, 100);
     }
 }
-
 renderAllStops = () => {
     console.log("renderAllStops function called");
     console.log("this object:", this);
-    console.log("Number of stops to render:", this.stopsOrdered ? this.stopsOrdered.length : 0);
-    console.log("stopsReal object:", this.stopsReal);
+    console.log("stopsOrdered:", this.stopsOrdered);
+    console.log("stopsReal:", this.stopsReal);
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
@@ -1180,6 +1185,14 @@ var allLines = [];
 var madeLines = false;
 
 function getETA(route, speed, start, end, bus) {
+    if (!this.routesReal[route] || !this.routesReal[route].coords) {
+        console.error("Invalid route data for:", route);
+        return 0;
+    }
+    if (start === undefined || end === undefined) {
+        console.error("Invalid start or end for bus:", bus);
+        return 0;
+    }
     var toRet;
     if (start === end) {
         return 0;
