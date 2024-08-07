@@ -145,17 +145,23 @@ function setBuses(what) {
 }
 
 function trueSetBuses(what) {
+    console.log("Starting trueSetBuses");
     this.buses = what;
     var busesExclusively = this.buses['buses'];
-    var busIds = Object.keys(busesExclusively);
+    console.log("busesExclusively:", busesExclusively);
+    
     for (var routs of Object.keys(this.routesReal)) {
         this.routesReal[routs].active = false;
     }
-    var news = busIds.filter((word) => !(Object.keys(this.busesReal).includes(busesExclusively[word][0]['busName'])));
-    var existing = busIds.filter((word) => (Object.keys(this.busesReal).includes(busesExclusively[word][0]['busName'])));
+    var news = Object.keys(busesExclusively).filter((word) => !(Object.keys(this.busesReal).includes(busesExclusively[word][0]['busName'])));
+    var existing = Object.keys(busesExclusively).filter((word) => (Object.keys(this.busesReal).includes(busesExclusively[word][0]['busName'])));
 
     for (var busId of existing) {
         let currentBus = busesExclusively[busId][0];
+        if (!currentBus || !currentBus['busName'] || !currentBus['route']) {
+            console.warn(`Invalid existing bus data:`, currentBus);
+            continue;
+        }
         this.busesReal[currentBus['busName']].num = currentBus['busName'];
         this.busesReal[currentBus['busName']].route = currentBus['route'];
         this.busesReal[currentBus['busName']].routeId = currentBus['routeId'];
@@ -173,6 +179,10 @@ function trueSetBuses(what) {
     }
     for (var busId of news) {
         let currentBus = busesExclusively[busId][0];
+        if (!currentBus || !currentBus['busName'] || !currentBus['route']) {
+            console.warn(`Invalid new bus data:`, currentBus);
+            continue;
+        }
         this.busesReal[currentBus['busName']] = {
             num: currentBus['busName'],
             route: currentBus['route'],
@@ -197,7 +207,10 @@ function showBusOnMap(which) {
 }
 
 async function setBusesFirst(what) {
+    console.log("Starting setBusesFirst");
+    console.log("Input data:", what);
     this.trueSetBuses.call(this, what);
+    console.log("After trueSetBuses, busesReal:", this.busesReal);
     this.bussyDeletion.call(this);
     for (var rout of Object.keys(this.routesReal).toSorted()) {
         this.routesReal[rout].active = (this.routesReal[rout].buses.length > 0);
@@ -261,73 +274,8 @@ async function setBusesFirst(what) {
                 servicedByRoute += "| " + route + " |";
             }
         }
-        current.lastChild.innerHTML = keys[i] + "</br><p style='font-size: 1.5vh; font-weight: normal;'>" + servicedByRoute + "</p>";
-        $(current.lastChild).on('click', function() { showStopOnMap(`${keys[i]}`) })
     }
-    $(document.getElementById('routesList')).find('[class="popupList"]')[0].innerHTML = "";
-    var current = $(document.getElementById('routesList')).find('[class="popupList"]')[0];
-    for (var rout of Object.keys(this.routesReal).toSorted()) {
-        if (this.routesReal[rout].active) {
-            current.append(document.createElement("div"));
-            current.lastChild.className = routeItem;
-            current.lastChild.id = this.routesReal[rout].full;
-            current.lastChild.innerHTML = this.routesReal[rout].full + " | " + this.routesReal[rout].short.toUpperCase();
-            current.lastChild.append(document.createElement('div'));
-            current.lastChild.lastChild.className = 'routeSelector';
-            let nam = this.routesReal[rout].full;
-            current.lastChild.style.borderColor = this.routesReal[rout].color;
-            let hihi = current.lastChild.lastChild;
-            let hi = current.lastChild;
-            hihi.addEventListener('click', function(e) { selectRoute(nam) }.bind(this));
-            hi.addEventListener("click", function(e) { if (hi === e.target) { showRoute(nam) } }.bind(this));
-            this.renderRoute(this.routesReal[rout].full);
-        }
-    }
-    current.append(document.createElement("div"));
-    current.lastChild.className = "popupItem bus";
-    current.lastChild.innerText = "-- Inactive Routes --"
-    for (var rout of Object.keys(this.routesReal).toSorted()) {
-        if (!this.routesReal[rout].active) {
-            current.append(document.createElement("div"));
-            current.lastChild.className = routeItem;
-            current.lastChild.id = this.routesReal[rout].full;
-            current.lastChild.innerHTML = this.routesReal[rout].full + " | " + this.routesReal[rout].short.toUpperCase();
-            current.lastChild.append(document.createElement('div'));
-            current.lastChild.lastChild.className = 'routeSelector';
-            let nam = this.routesReal[rout].full;
-            current.lastChild.style.borderColor = this.routesReal[rout].color;
-            let hihi = current.lastChild.lastChild;
-            let hi = current.lastChild;
-            hihi.addEventListener('click', function(e) { selectRoute(nam) }.bind(this));
-            hi.addEventListener("click", function(e) { if (hi === e.target) { showRoute(nam) } }.bind(this));
-            this.renderRoute(this.routesReal[rout].full)
-        }
-    }
-    await $.post("https://passio3.com/www/mapGetData.php?getBuses=1&deviceId=" + deviceId + "&wTransloc=1", { json: '{"s0":"2343","sA":1}' },
-        function(data) {
-            if (Object.keys(JSON.parse(data)).length === 1) {
-                this.errorMessage = "Passio servers dead, ggwp :(";
-                document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
-                throw new Error("Passio Gone");
-            }
-            this.setBuses.call(this, JSON.parse(data));
-            updateBuses.call(this);
-        }.bind(this)).fail(failure.bind(this));
-    setInterval(async function() {
-        await $.post("https://passio3.com/www/mapGetData.php?getBuses=1&deviceId=" + deviceId + "&wTransloc=1", { json: '{"s0":"2343","sA":1}' },
-            function(data) {
-                if (Object.keys(JSON.parse(data)).length === 1) {
-                    this.errorMessage = "Passio servers dead, ggwp :(";
-                    document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
-                    throw new Error("Passio Gone");
-                }
-                this.setBuses.call(this, JSON.parse(data));
-                updateBuses.call(this);
-            }.bind(this)).fail(failure.bind(this));
-    }, 10000);
-    //setInterval.call(this, cleanup.bind(this), 10000);
-    updateBusVisibility();
-}
+}            
 
 function cleanup() {
     for (var bussy of Object.keys(busesReal)) {
@@ -417,10 +365,16 @@ var busMarkers = {};
 var stopsHaveBuses = false;
 
 function updateBuses() {
+    console.log("Starting updateBuses");
+    console.log("busesReal keys:", Object.keys(busesReal));
     for (var rout of Object.keys(this.routesReal)) {
         this.routesReal[rout].buses = [];
     }
     for (var bussy of Object.keys(busesReal)) {
+        if (!this.busesReal[bussy] || !this.busesReal[bussy].route) {
+            console.warn(`Invalid bus data for ${bussy}:`, this.busesReal[bussy]);
+            continue;
+        }
         if (!(Object.keys(this.routesReal).includes(this.busesReal[bussy].route))) {
             console.warn(`Invalid route for bus ${bussy}: ${this.busesReal[bussy].route}`);
             continue;
