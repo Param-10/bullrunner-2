@@ -511,6 +511,37 @@ function updateBuses() {
         console.log(this.busesReal[bus].route)
         this.busesReal[bus].ttn = getETA(this.busesReal[bus].route, this.busesReal[bus].speed, this.busesReal[bus].pointOnPath, this.busesReal[bus].nextStop[0], bus)
     }
+    
+    for (var bus of Object.keys(this.busesReal)) {
+        var key = this.busesReal[bus].route;
+
+        if (!Object.keys(this.routesReal).includes(key)) {
+            continue;
+        }
+
+        if (document.getElementById('stopContainer').style.display !== "none") {
+            this.showStopDetails(document.getElementById('stopContainer').firstElementChild.innerText);
+        }
+
+        console.log(this.busesReal[bus].route);
+
+        // Add checks before calling getETA
+        if (this.busesReal[bus].route && 
+            typeof this.busesReal[bus].speed !== 'undefined' && 
+            typeof this.busesReal[bus].pointOnPath !== 'undefined' && 
+            this.busesReal[bus].nextStop && 
+            typeof this.busesReal[bus].nextStop[0] !== 'undefined') {
+            this.busesReal[bus].ttn = getETA(
+                this.busesReal[bus].route, 
+                this.busesReal[bus].speed, 
+                this.busesReal[bus].pointOnPath, 
+                this.busesReal[bus].nextStop[0], 
+                bus
+            );
+        } else {
+            console.error("Invalid bus data for ETA calculation:", bus, this.busesReal[bus]);
+        }
+    }
 }
 
 async function schmooveBus(bus, frames) {
@@ -1131,10 +1162,31 @@ function getETA(route, speed, start, end, bus) {
     if (start === end) {
         return 0;
     }
-    console.log(turf.distance(turf.point(this.routesReal[route].coords[start]), turf.point(this.routesReal[route].coords[end]), { units: 'kilometers' }).toFixed(1) + "km distance betweeen start and stop of bus " + bus + 'points: ' + start + " " + end);
-    if (turf.distance(turf.point(this.routesReal[route].coords[start]), turf.point(this.routesReal[route].coords[end]), { units: 'kilometers' }) < 0.05) {
+
+    // Check if the coordinates are valid
+    if (!this.routesReal[route] || !this.routesReal[route].coords || 
+        !this.routesReal[route].coords[start] || !this.routesReal[route].coords[end]) {
+        console.error("Invalid coordinates for route:", route, "start:", start, "end:", end);
         return 0;
     }
+
+    let startPoint = this.routesReal[route].coords[start];
+    let endPoint = this.routesReal[route].coords[end];
+
+    // Ensure startPoint and endPoint are arrays with two elements
+    if (!Array.isArray(startPoint) || startPoint.length !== 2 || 
+        !Array.isArray(endPoint) || endPoint.length !== 2) {
+        console.error("Invalid coordinate format for route:", route, "start:", startPoint, "end:", endPoint);
+        return 0;
+    }
+
+    console.log(turf.distance(turf.point(startPoint), turf.point(endPoint), { units: 'kilometers' }).toFixed(1) + 
+                "km distance between start and stop of bus " + bus + ' points: ' + start + " " + end);
+
+    if (turf.distance(turf.point(startPoint), turf.point(endPoint), { units: 'kilometers' }) < 0.05) {
+        return 0;
+    }
+
     try {
         if (end < start) {
             toRet = (turf.length(turf.lineString(this.routesReal[route].coords.slice(start, this.routesReal[route].coords.length - 1).concat(this.routesReal[route].coords.slice(0, end))), { units: 'kilometers' }) * 1000) / speed;
@@ -1142,9 +1194,8 @@ function getETA(route, speed, start, end, bus) {
             toRet = (turf.length(turf.lineString(this.routesReal[route].coords.slice(start, end + 1)), { units: 'kilometers' }) * 1000) / speed;
         }
     } catch (e) {
-        if (e.message == "coordinates must be an array of two or more positions") {
-            toRet = 0;
-        }
+        console.error("Error calculating ETA:", e.message);
+        toRet = 0;
     }
     return toRet;
 }
