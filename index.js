@@ -41,8 +41,8 @@ function failure() {
 }
 
 async function initialise() {
-    javascriptCopythis.renderAllStops = this.renderAllStops.bind(this);
-
+    this.renderAllStops = this.renderAllStops.bind(this);
+    
     document.getElementById('busSearch').addEventListener('input', function(event) { filterBuses(event.data) });
     document.getElementById('stopSearch').addEventListener('input', function(event) { filterStops(event.data) });
     $.ajaxSetup({
