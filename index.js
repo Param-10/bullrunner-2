@@ -121,9 +121,12 @@ async function initialise() {
     });
     console.log("Mapbox GL JS version:", mapboxgl.version);
     map.on('load', () => {
-        console.log("Map fully loaded");
+        console.log("Map fully loaded event triggered");
         if (this.stopsLoaded) {
+            console.log("Stops are loaded, calling renderAllStops");
             renderAllStops.call(this);
+        } else {
+            console.log("Stops are not loaded yet");
         }
     });
 }
@@ -717,21 +720,26 @@ function loadStops() {
     }
 
     this.stopsLoaded = true;
+    this.stopsLoaded = true;
+    console.log("loadStops function completed, stopsLoaded set to true")
 }
 
 function renderAllStops() {
-    console.log("Rendering all stops");
+    console.log("Starting renderAllStops function");
+    console.log("Number of stops to render:", this.stopsOrdered.length);
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
     }
     for (var stoppe of this.stopsOrdered) {
+        console.log("Attempting to render stop:", stoppe);
         if (this.stopsReal[stoppe] && this.stopsReal[stoppe].routes) {
             this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
         } else {
             console.error("Invalid stop data for:", stoppe);
         }
     }
+    console.log("Finished renderAllStops function");
     checkStopMarkersInView();
 }
 
