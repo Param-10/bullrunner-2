@@ -118,10 +118,17 @@ async function initialise() {
     console.log("Initial map center:", map.getCenter(), "zoom:", map.getZoom());
     map.on('style.load', () => {
         console.log("Map style fully loaded");
-    });
+        if (this.stopsLoaded) {
+          console.log("Calling renderAllStops");
+          renderAllStops.call(this);
+        } else {
+          console.log("Stops not loaded yet");
+        }
+      });
     console.log("Mapbox GL JS version:", mapboxgl.version);
     map.on('load', () => {
         console.log("Map fully loaded event triggered");
+        console.log("stopsLoaded value:", this.stopsLoaded);
         if (this.stopsLoaded) {
             console.log("Stops are loaded, calling renderAllStops");
             renderAllStops.call(this);
@@ -221,6 +228,7 @@ async function setBusesFirst(what) {
             checkStopMarkersInView();
         } else {
             map.on('load', () => {
+                console.log("Map 'load' event fired");
                 for (var stoppe of this.stopsOrdered) {
                     this.renderCircle.call(this, this.stopsReal[stoppe].routes, stoppe);
                 }
@@ -725,7 +733,7 @@ function loadStops() {
 }
 
 function renderAllStops() {
-    console.log("Starting renderAllStops function");
+    console.log("renderAllStops function called");
     console.log("Number of stops to render:", this.stopsOrdered.length);
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
@@ -740,6 +748,7 @@ function renderAllStops() {
         }
     }
     console.log("Finished renderAllStops function");
+    renderAllStops.call(this);
     checkStopMarkersInView();
 }
 
