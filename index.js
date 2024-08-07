@@ -954,17 +954,20 @@ function renderRoute(routeName) {
 var stopMarkers = []
 
 function renderCircle(routeList, stopName) {
+    console.log("Beginning renderCircle for stop:", stopName);
+    console.log("Route list for this stop:", routeList);
 
-    console.log("Rendering stop:", stopName);
     if (!this.stopsReal[stopName]) {
         console.error("Stop not found in stopsReal:", stopName);
         return;
     }
+
     if (!map.loaded()) {
         console.error("Map not loaded yet, cannot render stop:", stopName);
         return;
     }
 
+    console.log("Stop data:", this.stopsReal[stopName]);
     console.log("Creating marker for stop:", stopName, "at position:", [this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
 
     let routList = [];
@@ -975,6 +978,8 @@ function renderCircle(routeList, stopName) {
             routList.push(routte);
         }
     }
+    console.log("Active routes for this stop:", routList);
+
     let svg = document.createElement('div');
     svg.className = 'stopMarker';
     svg.id = 'stop: ' + stopName;
@@ -991,7 +996,12 @@ function renderCircle(routeList, stopName) {
         inner += '</svg>\n';
     }
     svg.innerHTML = inner;
-    svg.addEventListener('click', () => { showStopDetails(stopName); });
+    console.log("Created SVG element for stop:", stopName);
+
+    svg.addEventListener('click', () => { 
+        console.log("Stop marker clicked:", stopName);
+        showStopDetails(stopName); 
+    });
 
     try {
         let marker = new mapboxgl.Marker(svg)
@@ -1002,6 +1012,8 @@ function renderCircle(routeList, stopName) {
     } catch (error) {
         console.error("Error adding marker for stop:", stopName, error);
     }
+
+    console.log("Finished renderCircle for stop:", stopName);
 }
 
 function checkStopMarkersInView() {
