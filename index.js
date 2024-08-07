@@ -51,103 +51,60 @@ async function initialise() {
         error: function(xhr) {
             this.errorMessage = ("Timed Out. Passio dead :(");
         }
-    })
+    });
+
     let tempScope = this;
     document.getElementById('routesButton').addEventListener('click', stillLoading.bind(tempScope));
     document.getElementById('stopsButton').addEventListener('click', stillLoading.bind(tempScope));
     document.getElementById('alertsButton').addEventListener('click', stillLoading.bind(tempScope));
     document.getElementById('busesButton').addEventListener('click', stillLoading.bind(tempScope));
 
-    await $.post("https://passio3.com/www/mapGetData.php?getRoutes=1&deviceId=" + deviceId + "&wTransloc=1", { json: '{"systemSelected0":"2343","amount":1}' },
-        function(data) {
-            if (Object.keys(JSON.parse(data)).length === 1) {
-                this.errorMessage = "Passio servers dead, ggwp :(";
-                document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
-                throw new Error("Passio Gone")
-            }
-            setRoutes(JSON.parse(data));
-            loadRoutes();
-        }.bind(this)).fail(failure.bind(this));
-    await $.post("https://passio3.com/www/mapGetData.php?getStops=1&deviceId=" + deviceId + "&wTransloc=1", { json: '{"s0":"2343","sA":1}' },
-        function(data) {
-            if (Object.keys(JSON.parse(data)).length === 1) {
-                this.errorMessage = "Passio servers dead, ggwp :(";
-                document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
-                throw new Error("Passio Gone");
-            }
-            setStops(JSON.parse(data));
-            loadStops();
-        }.bind(this)).fail(failure.bind(this));
-    await $.post("https://passio3.com/www/goServices.php?getAlertMessages=1&deviceId=" + deviceId, { json: '{"systemSelected0":"2343", "amount":1}' },
-        function(data) {
-            if (Object.keys(JSON.parse(data)).length === 1) {
-                this.errorMessage = "Passio servers dead, ggwp :(";
-                document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
-                throw new Error("Passio Gone");
-            }
-            setAlerts(JSON.parse(data));
-            loadAlerts();
-        }.bind(this)).fail(failure.bind(this));
-    await $.post("https://passio3.com/www/mapGetData.php?getBuses=1&deviceId=" + deviceId + "&wTransloc=1", { json: '{"s0":"2343","sA":1}' },
-        function(data) {
-            if (Object.keys(JSON.parse(data)).length === 1) {
-                this.errorMessage = "Passio servers dead, ggwp :(";
-                document.getElementById('status').innerHTML = `<h3 class="popupTitle">Something Went Wrong</h3></br><div class="popupItem"><h3>From Passio Official</h3></br>"${JSON.parse(data)['error']}"</div>`
-                throw new Error("Passio Gone");
-            }
-            setBusesFirst.call(this, JSON.parse(data));
-        }.bind(this)).fail(failure.bind(this));
+    try {
+        await Promise.all([
+            this.loadRoutes(),
+            this.loadStops(),
+            this.loadAlerts(),
+            this.loadBuses(),
+            new Promise(resolve => {
+                if (map.loaded()) {
+                    resolve();
+                } else {
+                    map.on('load', resolve);
+                }
+            })
+        ]);
 
-    document.getElementById('routesButton').replaceWith(document.getElementById('routesButton').cloneNode(true));
-    document.getElementById('stopsButton').replaceWith(document.getElementById('stopsButton').cloneNode(true));
-    document.getElementById('busesButton').replaceWith(document.getElementById('busesButton').cloneNode(true));
-    document.getElementById('alertsButton').replaceWith(document.getElementById('alertsButton').cloneNode(true));
-    document.getElementById('routesButton').addEventListener('click', openRoutes.bind(this));
-    document.getElementById('stopsButton').addEventListener('click', openStops.bind(this));
-    document.getElementById('alertsButton').addEventListener('click', openAlerts.bind(this));
-    document.getElementById('busesButton').addEventListener('click', openBuses.bind(this));
-
-    var userAgent = navigator.userAgent;
-    if (userAgent.includes('iPhone') || userAgent.includes('iPad') || userAgent.includes('Android')) {
-        $("#stylesheet").attr("href", "styleMobile.css");
-        console.info("mobile");
-    } else {
-        console.info("pc");
+        console.log("All data loaded and map is ready");
+    } catch (error) {
+        console.error("Error during initialization:", error);
+        this.failure();
+        return;
     }
-    map.on('zoomend', fixSizes.bind(this));
+
+    this.setupEventListeners();
+    this.setupMobileCheck();
+
+    map.on('zoomend', this.fixSizes.bind(this));
     $("#status").hide();
 
     console.log("Initial map center:", map.getCenter(), "zoom:", map.getZoom());
-    map.on('style.load', () => {
-        console.log("Map style fully loaded");
-        if (this.stopsLoaded) {
-          console.log("Calling renderAllStops");
-          renderAllStops.call(this);
-        } else {
-          console.log("Stops not loaded yet");
-        }
-      });
     console.log("Mapbox GL JS version:", mapboxgl.version);
-    map.on('load', () => {
-        console.log("Map 'load' event fired");
-        console.log("stopsLoaded value:", this.stopsLoaded);
-        if (this.stopsLoaded) {
-            console.log("Calling renderAllStops from map load event");
-            setTimeout(() => {
-                this.renderAllStops();
-            }, 100);
-        } else {
-            console.log("Stops not loaded yet when map load event fired");
-        }
-    });
 
-    if (map.loaded()) {
-        console.log("Map already loaded, calling renderAllStops immediately");
-        setTimeout(() => {
-            this.renderAllStops();
-        }, 100);
+    if (this.stopsLoaded && map.isStyleLoaded()) {
+        console.log("Calling renderAllStops immediately");
+        this.renderAllStops();
+    } else {
+        console.log("Waiting for map style to load before rendering stops");
+        map.once('styledata', () => {
+            if (this.stopsLoaded) {
+                this.renderAllStops();
+            } else {
+                console.error("Stops not loaded when map style finished loading");
+            }
+        });
     }
 
+    // Fallback timeout
     setTimeout(() => {
         console.log("Timeout reached. stopsLoaded:", this.stopsLoaded, "stopMarkers length:", this.stopMarkers ? this.stopMarkers.length : 0);
         if (this.stopsLoaded && (!this.stopMarkers || this.stopMarkers.length === 0)) {
@@ -761,18 +718,33 @@ function renderAllStops() {
     console.log("renderAllStops function called");
     console.log("this object:", this);
     console.log("Number of stops to render:", this.stopsOrdered ? this.stopsOrdered.length : 0);
+
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
     }
-    for (var stoppe of this.stopsOrdered) {
+
+    if (!map.isStyleLoaded()) {
+        console.log("Map style not fully loaded, waiting...");
+        map.once('styledata', this.renderAllStops.bind(this));
+        return;
+    }
+
+    this.stopMarkers = this.stopMarkers || [];
+
+    this.stopsOrdered.forEach(stoppe => {
         console.log("Attempting to render stop:", stoppe);
         if (this.stopsReal[stoppe] && this.stopsReal[stoppe].routes) {
-            this.renderCircle(this.stopsReal[stoppe].routes, stoppe);
+            try {
+                this.renderCircle(this.stopsReal[stoppe].routes, stoppe);
+            } catch (error) {
+                console.error("Error rendering stop:", stoppe, error);
+            }
         } else {
             console.error("Invalid stop data for:", stoppe);
         }
-    }
+    });
+
     console.log("Finished renderAllStops function");
     this.checkStopMarkersInView();
 }
@@ -998,7 +970,6 @@ var stopMarkers = []
 function renderCircle(routeList, stopName) {
     console.log("Beginning renderCircle for stop:", stopName);
     console.log("Route list for this stop:", routeList);
-    console.log("Stop data:", this.stopsReal[stopName]);
 
     if (!this.stopsReal[stopName]) {
         console.error("Stop not found in stopsReal:", stopName);
@@ -1013,14 +984,7 @@ function renderCircle(routeList, stopName) {
     console.log("Stop data:", this.stopsReal[stopName]);
     console.log("Creating marker for stop:", stopName, "at position:", [this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
 
-    let routList = [];
-    let bruhMoment = JSON.parse(JSON.stringify(this.routesReal));
-    for (var routte of routeList) {
-        var hello = bruhMoment[routte].active;
-        if (hello) {
-            routList.push(routte);
-        }
-    }
+    let routList = routeList.filter(route => this.routesReal[route] && this.routesReal[route].active);
     console.log("Active routes for this stop:", routList);
 
     let svg = document.createElement('div');
@@ -1028,13 +992,13 @@ function renderCircle(routeList, stopName) {
     svg.id = 'stop: ' + stopName;
     let inner = '';
     if (routList.length > 0) {
-        for (var i = 0; i < routList.length; i++) {
-            inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill= "${bruhMoment[routList[i]].color}" stroke="#FFFFFF" stroke-width="0.3em">\n`
+        routList.forEach((route, i) => {
+            inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill="${this.routesReal[route].color}" stroke="#FFFFFF" stroke-width="0.3em">\n`;
             inner += "<path d='" + arc({ x: 0, y: 0, r: 50, start: ((360 / routList.length) * i), end: ((360 / routList.length) * (i + 1)) }) + "'></path>\n";
             inner += '</svg>\n';
-        }
+        });
     } else {
-        inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill= "#888888" stroke="#FFFFFF" stroke-width="0.3em">\n`
+        inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill="#888888" stroke="#FFFFFF" stroke-width="0.3em">\n`;
         inner += "<path d='" + arc({ x: 0, y: 0, r: 50 }) + "'></path>\n";
         inner += '</svg>\n';
     }
@@ -1043,7 +1007,7 @@ function renderCircle(routeList, stopName) {
 
     svg.addEventListener('click', () => { 
         console.log("Stop marker clicked:", stopName);
-        showStopDetails(stopName); 
+        this.showStopDetails(stopName); 
     });
 
     try {
