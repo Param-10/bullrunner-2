@@ -97,6 +97,11 @@ body {
     border-color: white;
 }
 
+.stopMarker {
+    z-index: 1000 !important;
+    opacity: 1 !important;
+}
+
 .x {
     position: absolute;
     top: 0.25em;

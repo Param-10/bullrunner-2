@@ -786,19 +786,23 @@ function renderAllStops() {
     console.log("this object:", this);
     console.log("stopsOrdered:", this.stopsOrdered);
     console.log("stopsReal:", this.stopsReal);
+    
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
     }
+    
     for (var stoppe of this.stopsOrdered) {
         console.log("Attempting to render stop:", stoppe);
         console.log("Stop data:", this.stopsReal[stoppe]);
         if (this.stopsReal[stoppe] && this.stopsReal[stoppe].routes) {
+            console.log("Rendering circle for stop:", stoppe);
             this.renderCircle(this.stopsReal[stoppe].routes, stoppe);
         } else {
             console.error("Invalid stop data for:", stoppe);
         }
     }
+    
     console.log("Finished renderAllStops function");
     this.checkStopMarkersInView();
 }
