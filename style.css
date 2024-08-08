@@ -17,6 +17,7 @@ body {
     color: white;
     padding-top: 1.3vh;
     padding-left: 1.3vh;
+    z-index: 2000;
 }
 
 #controls {
