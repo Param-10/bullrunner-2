@@ -33,21 +33,25 @@ body {
     border-width: 2px;
     border-color: white;
     border-style: solid;
+    z-index: 2001;
 }
 
 .SVGcontainer {
     width: calc(100%/3);
     border-radius: 10px;
+    z-index: 2001;
 }
 
 .SVGcontainer:hover {
     background-color: white;
+    z-index: 2001;
 }
 
 .SVGicon {
     height: 80%;
     width: 80%;
     padding: 10%;
+    z-index: 2001;
 }
 
 .popup {
