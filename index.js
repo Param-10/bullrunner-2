@@ -114,7 +114,12 @@ async function initialise() {
     } else {
         console.info("pc");
     }
-    map.on('zoomend', fixSizes.bind(this));
+
+    map.on('zoomend', () => {
+        fixSizes.call(this);
+        zoomb = map.getZoom();
+    });
+
     $("#status").hide();
 
     console.log("Initial map center:", map.getCenter(), "zoom:", map.getZoom());
@@ -803,6 +808,7 @@ function renderAllStops() {
         }
     }
     
+    fixSizes.call(this);
     console.log("Finished renderAllStops function");
     this.checkStopMarkersInView();
 }
@@ -951,6 +957,15 @@ const busRatio = 3;
 var zoomb = map.getZoom();
 
 function fixSizes() {
+    let zoomLevel = map.getZoom();
+    let baseSize = 20; // Base size in pixels
+    let size = baseSize * (1 + (zoomLevel - 10) * 0.2); // Adjust size based on zoom
+
+    for (var marker of document.querySelectorAll('.stopMarker')) {
+        marker.style.width = `${size}px`;
+        marker.style.height = `${size}px`;
+    }
+
     for (var mapRoute of this.currentRoutes) {
         map.setPaintProperty(mapRoute, 'line-width', (ratio * zoomb) / 5);
         map.setPaintProperty(mapRoute + "bg", 'line-width', (ratio * zoomb) / 5);
@@ -1058,12 +1073,12 @@ function renderCircle(routeList, stopName) {
     let inner = '';
     if (routList.length > 0) {
         for (var i = 0; i < routList.length; i++) {
-            inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill= "${bruhMoment[routList[i]].color}" stroke="#FFFFFF" stroke-width="0.3em">\n`
+            inner += `<svg height='100%' width='100%' viewbox="-50 -50 100 100" fill="${bruhMoment[routList[i]].color}" stroke="#FFFFFF" stroke-width="0.3em">\n`
             inner += "<path d='" + arc({ x: 0, y: 0, r: 50, start: ((360 / routList.length) * i), end: ((360 / routList.length) * (i + 1)) }) + "'></path>\n";
             inner += '</svg>\n';
         }
     } else {
-        inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill= "#888888" stroke="#FFFFFF" stroke-width="0.3em">\n`
+        inner += `<svg height='100%' width='100%' viewbox="-50 -50 100 100" fill="#888888" stroke="#FFFFFF" stroke-width="0.3em">\n`
         inner += "<path d='" + arc({ x: 0, y: 0, r: 50 }) + "'></path>\n";
         inner += '</svg>\n';
     }
