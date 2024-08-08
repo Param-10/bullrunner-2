@@ -49,6 +49,7 @@ body {
 }
 
 .popup {
+    z-index: 2000;
     position: absolute;
     top: 5vh;
     left: 25vw;
@@ -63,6 +64,7 @@ body {
 }
 
 .popupList {
+    z-index: 2001;
     overflow-y: auto;
     flex-grow: 1;
 }
@@ -77,6 +79,7 @@ body {
 
 .popupItem {
     position: relative;
+    z-index: 2002;
     border: 0.05em;
     border-left: 0.3em;
     border-style: solid;
