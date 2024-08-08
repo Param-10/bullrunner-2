@@ -103,14 +103,10 @@ body {
 .stopMarker {
     z-index: 1000 !important;
     opacity: 1 !important;
-    width: 10px;
+    width: 3px;
     /* Adjust this value to make the circle smaller */
-    height: 10px;
+    height: 3px;
     /* Adjust this value to make the circle smaller */
-    border-radius: 50%;
-    /* Ensures the element is a circle */
-    border: 1px solid black;
-    /* Optional: border around the circle */
 }
 
 .x {
