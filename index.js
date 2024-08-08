@@ -150,7 +150,7 @@ async function initialise() {
             this.renderAllStops();
         }, 100);
     }
-    
+
     window.addEventListener('unhandledrejection', function(event) {
         console.error('Unhandled promise rejection:', event.reason);
     });
@@ -645,6 +645,7 @@ function loadRoutes() {
 
 function loadStops() {
     console.log("Starting loadStops function");
+    console.log("Initial stopsReal:", this.stopsReal);
 
     this.stopsReal = {};
     this.stopsOrdered = [];
@@ -751,9 +752,12 @@ function loadStops() {
     console.log("Filtering stops...");
     for (var stopName of Object.keys(this.stopsReal)) {
         let stop = this.stopsReal[stopName];
+        console.log("Checking stop:", stopName, "Coordinates:", stop.long, stop.lat);
         if (stop.long < -82.6 || stop.long > -82.2 || stop.lat > 28.1 || stop.lat < 27.8) {
             delete this.stopsReal[stopName];
             console.log("Removed stop outside bounds:", stopName);
+        } else {
+            console.log("Kept stop:", stopName);
         }
     }
 
@@ -762,6 +766,9 @@ function loadStops() {
     console.log("Number of stops loaded:", this.stopsOrdered.length);
     console.log("stopsOrdered:", this.stopsOrdered);
     console.log("Sample stop data:", this.stopsReal[this.stopsOrdered[0]]);
+
+    console.log("Final stopsReal:", this.stopsReal);
+    console.log("Final stopsOrdered:", this.stopsOrdered);
 
     this.stopsLoaded = true;
     console.log("loadStops function completed, stopsLoaded set to true");
@@ -779,19 +786,23 @@ function renderAllStops() {
     console.log("this object:", this);
     console.log("stopsOrdered:", this.stopsOrdered);
     console.log("stopsReal:", this.stopsReal);
+    
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
     }
+    
     for (var stoppe of this.stopsOrdered) {
         console.log("Attempting to render stop:", stoppe);
         console.log("Stop data:", this.stopsReal[stoppe]);
         if (this.stopsReal[stoppe] && this.stopsReal[stoppe].routes) {
+            console.log("Rendering circle for stop:", stoppe);
             this.renderCircle(this.stopsReal[stoppe].routes, stoppe);
         } else {
             console.error("Invalid stop data for:", stoppe);
         }
     }
+    
     console.log("Finished renderAllStops function");
     this.checkStopMarkersInView();
 }
