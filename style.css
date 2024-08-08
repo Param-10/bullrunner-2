@@ -58,7 +58,7 @@ body {
     width: 50vw;
     min-height: 10vh;
     max-height: 90vh;
-    background-color: #006747;
+    background-color: #007E57;
     /* USF Green */
     border-radius: 10px;
     overflow: hidden;
@@ -93,7 +93,7 @@ body {
     border-radius: 16px;
     border-color: #ffc72c;
     /* USF Gold */
-    background-color: #006747;
+    background-color: #007E57;
     /* USF Green */
 }
 
@@ -135,7 +135,7 @@ body {
     border-radius: 16px;
     border-color: inherit;
     border-style: solid;
-    background-color: #006747;
+    background-color: #007E57;
     /* USF Green */
 }
 
@@ -149,7 +149,7 @@ li {
     margin: 0.1em;
     margin-right: 2em;
     border-radius: 16px;
-    background-color: #006747;
+    background-color: #007E57;
     /* USF Green */
     border-color: #ffc72c;
     /* USF Gold */
@@ -176,7 +176,7 @@ input {
 .busDetail {
     all: revert;
     position: absolute;
-    background-color: #006747;
+    background-color: #007E57;
     /* USF Green */
     border-radius: 10px;
     aspect-ratio: 3/1;
