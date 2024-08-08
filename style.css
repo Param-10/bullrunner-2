@@ -16,7 +16,6 @@ body {
     color: white;
     padding-top: 1.3vh;
     padding-left: 1.3vh;
-    z-index: 3;
 }
 
 #controls {
@@ -32,7 +31,6 @@ body {
     border-width: 2px;
     border-color: white;
     border-style: solid;
-    z-index: 3;
 }
 
 .SVGcontainer {
@@ -62,7 +60,6 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    z-index: 2;
 }
 
 .popupList {
@@ -98,18 +95,6 @@ body {
 .popupItem.alert {
     padding: 1%;
     border-color: white;
-}
-
-.stopMarker {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    cursor: pointer;
-    pointer-events: auto;
-}
-
-.mapboxgl-marker {
-    z-index: 1;
 }
 
 .x {
