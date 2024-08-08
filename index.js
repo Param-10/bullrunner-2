@@ -150,6 +150,10 @@ async function initialise() {
             this.renderAllStops();
         }, 100);
     }
+    
+    window.addEventListener('unhandledrejection', function(event) {
+        console.error('Unhandled promise rejection:', event.reason);
+    });
 }
 
 function setStops(what) {
@@ -658,6 +662,7 @@ function loadStops() {
             this.routesReal[routeName].path = this.stops['routes'][routeKeys[i]].slice(2);
         } else {
             console.warn("Route not found in routesReal:", routeName);
+            console.log("Available routes in routesReal:", Object.keys(this.routesReal));
         }
     }
 
@@ -746,7 +751,7 @@ function loadStops() {
     console.log("Filtering stops...");
     for (var stopName of Object.keys(this.stopsReal)) {
         let stop = this.stopsReal[stopName];
-        if (stop.long < -82.5 || stop.long > -82.3 || stop.lat > 27.9 || stop.lat < 28.2) {
+        if (stop.long < -82.6 || stop.long > -82.2 || stop.lat > 28.1 || stop.lat < 27.8) {
             delete this.stopsReal[stopName];
             console.log("Removed stop outside bounds:", stopName);
         }
@@ -769,7 +774,7 @@ function loadStops() {
     }
 }
 
-renderAllStops = () => {
+function renderAllStops() {
     console.log("renderAllStops function called");
     console.log("this object:", this);
     console.log("stopsOrdered:", this.stopsOrdered);
@@ -1196,9 +1201,9 @@ var allLines = [];
 var madeLines = false;
 
 function getETA(route, speed, start, end, bus) {
-    console.log(`getETA called for bus ${bus}: route=${route}, start=${start}, end=${end}`);
+    console.log(`getETA called for bus ${bus}: route=${route}, speed=${speed}, start=${start}, end=${end}`);
     if (!this.routesReal[route] || !this.routesReal[route].coords) {
-        console.error("Invalid route data for:", route);
+        console.error("Invalid route data for:", route, "routesReal:", this.routesReal);
         return 0;
     }
     if (start === undefined || end === undefined || start < 0 || end < 0 || 
