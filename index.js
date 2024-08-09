@@ -121,18 +121,18 @@ async function initialise() {
     map.on('style.load', () => {
         console.log("Map style fully loaded");
         if (this.stopsLoaded) {
-          console.log("Calling renderAllStops");
-          renderAllStops.call(this);
+            console.log("Calling renderAllStops");
+            renderAllStops.call(this);
         } else {
-          console.log("Stops not loaded yet");
+            console.log("Stops not loaded yet");
         }
-      });
+    });
     console.log("Mapbox GL JS version:", mapboxgl.version);
     if (map.loaded()) {
         console.log("Map already loaded, calling renderAllStops immediately");
         this.renderAllStops();
     }
-    
+
     map.on('load', () => {
         console.log("Map 'load' event fired");
         console.log("stopsLoaded value:", this.stopsLoaded);
@@ -786,12 +786,12 @@ function renderAllStops() {
     console.log("this object:", this);
     console.log("stopsOrdered:", this.stopsOrdered);
     console.log("stopsReal:", this.stopsReal);
-    
+
     if (!this.stopsOrdered || this.stopsOrdered.length === 0) {
         console.error("No stops to render");
         return;
     }
-    
+
     for (var stoppe of this.stopsOrdered) {
         console.log("Attempting to render stop:", stoppe);
         console.log("Stop data:", this.stopsReal[stoppe]);
@@ -802,7 +802,7 @@ function renderAllStops() {
             console.error("Invalid stop data for:", stoppe);
         }
     }
-    
+
     console.log("Finished renderAllStops function");
     this.checkStopMarkersInView();
 }
@@ -945,40 +945,57 @@ function updateBusVisibility() {
 //     }
 // }
 
-
 const ratio = 2;
 const busRatio = 3;
-var zoomb = map.getZoom();
+const fixedStopSize = 16; // Adjust this value for your desired fixed stop marker size
 
 function fixSizes() {
+    var zoomb = map.getZoom();
+
+    // Update route line widths
     for (var mapRoute of this.currentRoutes) {
         map.setPaintProperty(mapRoute, 'line-width', (ratio * zoomb) / 5);
         map.setPaintProperty(mapRoute + "bg", 'line-width', (ratio * zoomb) / 5);
     }
-    for (var marker of document.querySelectorAll('.stopMarker')) {
-        for (var svug of marker.childNodes) {
-            marker.setAttribute('style', `height: ${(zoomb * ratio).toString()}px; width: ${(zoomb * ratio).toString()}px;`)
-            $(svug).attr('height', (zoomb * ratio).toString() + "px");
-            $(svug).attr('width', (ratio * zoomb).toString() + "px")
+
+    // Set fixed size for stop markers
+    document.querySelectorAll('.stopMarker').forEach(marker => {
+        marker.style.height = `${fixedStopSize}px`;
+        marker.style.width = `${fixedStopSize}px`;
+
+        Array.from(marker.children).forEach(child => {
+            if (child instanceof SVGElement) {
+                child.setAttribute('height', `${fixedStopSize}px`);
+                child.setAttribute('width', `${fixedStopSize}px`);
+            }
+        });
+    });
+
+    // Update bus marker sizes
+    document.querySelectorAll('.busMarker').forEach(marker => {
+        const size = zoomb * busRatio;
+        marker.style.height = `${size}px`;
+        marker.style.width = `${size}px`;
+
+        if (marker.firstElementChild) {
+            marker.firstElementChild.setAttribute('height', `${size}px`);
+            marker.firstElementChild.setAttribute('width', `${size}px`);
         }
-    }
-    for (var marker of document.querySelectorAll('.stopMarker')) {
-        for (var svug of marker.childNodes) {
-            marker.setAttribute('style', `height: ${(zoomb * ratio * 2).toString()}px; width: ${(zoomb * ratio * 2).toString()}px;`)
-            $(svug).attr('height', (zoomb * ratio * 2).toString() + "px");
-            $(svug).attr('width', (ratio * zoomb * 2).toString() + "px")
+
+        if (marker.children[2]) {
+            const innerSize = 0.8 * size;
+            marker.children[2].style.height = `${innerSize}px`;
+            marker.children[2].style.width = `${innerSize}px`;
+            marker.children[2].style.padding = `${0.1 * size}px`;
         }
-    }
-    for (var marker of document.querySelectorAll('.busMarker')) {
-        marker.style.height = `${(zoomb * busRatio).toString()}px`;
-        marker.style.width = `${(zoomb * busRatio).toString()}px`;
-        $(marker.firstChild).attr('height', (zoomb * busRatio).toString() + "px");
-        $(marker.firstChild).attr('width', (zoomb * busRatio).toString() + "px");
-        marker.childNodes[2].style.height = (0.8 * (zoomb * busRatio)).toString() + "px";
-        marker.childNodes[2].style.width = (0.8 * (zoomb * busRatio)).toString() + "px";
-        marker.childNodes[2].style.padding = `${0.1 * (zoomb * busRatio)}px`;
-    }
+    });
 }
+
+// Call this function whenever the map zooms
+map.on('zoom', fixSizes);
+
+// Also call it once the map has loaded to set initial sizes
+map.on('load', fixSizes);
 
 function lighten(color) {
     color = color.replace('#', '');
@@ -1070,9 +1087,9 @@ function renderCircle(routeList, stopName) {
     svg.innerHTML = inner;
     console.log("Created SVG element for stop:", stopName);
 
-    svg.addEventListener('click', () => { 
+    svg.addEventListener('click', () => {
         console.log("Stop marker clicked:", stopName);
-        showStopDetails(stopName); 
+        showStopDetails(stopName);
     });
 
     try {
@@ -1153,7 +1170,7 @@ function showStopOnMap(stopName) {
     console.log("stopName:", stopName);
     console.log("this.stopsReal[stopName]:", this.stopsReal[stopName]);
 
-    
+
     if (this.stopsReal[stopName]) {
         map.setCenter([this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
         map.setZoom(16);
@@ -1217,8 +1234,8 @@ function getETA(route, speed, start, end, bus) {
         console.error("Invalid route data for:", route, "routesReal:", this.routesReal);
         return 0;
     }
-    if (start === undefined || end === undefined || start < 0 || end < 0 || 
-        start >= this.routesReal[route].coords.length || 
+    if (start === undefined || end === undefined || start < 0 || end < 0 ||
+        start >= this.routesReal[route].coords.length ||
         end >= this.routesReal[route].coords.length) {
         console.error("Invalid start or end for bus:", bus, "start:", start, "end:", end);
         return 0;
