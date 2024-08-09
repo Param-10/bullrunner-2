@@ -945,50 +945,39 @@ function updateBusVisibility() {
 //     }
 // }
 
-const ratio = 2;
+
+const ratio = 1.5;
 const busRatio = 3;
-const fixedStopSize = 16; // Fixed size for stop markers
+var zoomb = map.getZoom();
 
 function fixSizes() {
-    var zoomb = map.getZoom();
-
-    // Update route line widths
     for (var mapRoute of this.currentRoutes) {
         map.setPaintProperty(mapRoute, 'line-width', (ratio * zoomb) / 5);
         map.setPaintProperty(mapRoute + "bg", 'line-width', (ratio * zoomb) / 5);
     }
-
-    // Set fixed size for stop markers
-    document.querySelectorAll('.stopMarker').forEach(marker => {
-        marker.style.height = `${fixedStopSize}px`;
-        marker.style.width = `${fixedStopSize}px`;
-
-        Array.from(marker.children).forEach(child => {
-            if (child instanceof SVGElement) {
-                child.setAttribute('height', `${fixedStopSize}px`);
-                child.setAttribute('width', `${fixedStopSize}px`);
-            }
-        });
-    });
-
-    // Update bus marker sizes
-    document.querySelectorAll('.busMarker').forEach(marker => {
-        const size = zoomb * busRatio;
-        marker.style.height = `${size}px`;
-        marker.style.width = `${size}px`;
-
-        if (marker.firstElementChild) {
-            marker.firstElementChild.setAttribute('height', `${size}px`);
-            marker.firstElementChild.setAttribute('width', `${size}px`);
+    for (var marker of document.querySelectorAll('.stopMarker')) {
+        for (var svug of marker.childNodes) {
+            marker.setAttribute('style', `height: ${(zoomb * ratio).toString()}px; width: ${(zoomb * ratio).toString()}px;`)
+            $(svug).attr('height', (zoomb * ratio).toString() + "px");
+            $(svug).attr('width', (ratio * zoomb).toString() + "px")
         }
-
-        if (marker.children[2]) {
-            const innerSize = 0.8 * size;
-            marker.children[2].style.height = `${innerSize}px`;
-            marker.children[2].style.width = `${innerSize}px`;
-            marker.children[2].style.padding = `${0.1 * size}px`;
+    }
+    for (var marker of document.querySelectorAll('.stopMarker')) {
+        for (var svug of marker.childNodes) {
+            marker.setAttribute('style', `height: ${(zoomb * ratio * 2).toString()}px; width: ${(zoomb * ratio * 2).toString()}px;`)
+            $(svug).attr('height', (zoomb * ratio * 2).toString() + "px");
+            $(svug).attr('width', (ratio * zoomb * 2).toString() + "px")
         }
-    });
+    }
+    for (var marker of document.querySelectorAll('.busMarker')) {
+        marker.style.height = `${(zoomb * busRatio).toString()}px`;
+        marker.style.width = `${(zoomb * busRatio).toString()}px`;
+        $(marker.firstChild).attr('height', (zoomb * busRatio).toString() + "px");
+        $(marker.firstChild).attr('width', (zoomb * busRatio).toString() + "px");
+        marker.childNodes[2].style.height = (0.8 * (zoomb * busRatio)).toString() + "px";
+        marker.childNodes[2].style.width = (0.8 * (zoomb * busRatio)).toString() + "px";
+        marker.childNodes[2].style.padding = `${0.1 * (zoomb * busRatio)}px`;
+    }
 }
 
 function lighten(color) {
