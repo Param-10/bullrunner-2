@@ -947,7 +947,7 @@ function updateBusVisibility() {
 
 const ratio = 2;
 const busRatio = 3;
-const fixedStopSize = 16; // Adjust this value for your desired fixed stop marker size
+const fixedStopSize = 16; // Fixed size for stop markers
 
 function fixSizes() {
     var zoomb = map.getZoom();
@@ -990,12 +990,6 @@ function fixSizes() {
         }
     });
 }
-
-// Call this function whenever the map zooms
-map.on('zoom', fixSizes);
-
-// Also call it once the map has loaded to set initial sizes
-map.on('load', fixSizes);
 
 function lighten(color) {
     color = color.replace('#', '');
