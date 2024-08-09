@@ -946,7 +946,7 @@ function updateBusVisibility() {
 // }
 
 
-const ratio = 1.5;
+const ratio = 2;
 const busRatio = 3;
 var zoomb = map.getZoom();
 
