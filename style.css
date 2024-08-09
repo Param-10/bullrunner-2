@@ -114,8 +114,8 @@ body {
 .stopMarker {
     z-index: 1000 !important;
     opacity: 1 !important;
-    width: 0.5rem;
-    height: 0.5rem;
+    width: 0.5em;
+    height: 0.5em;
 }
 
 .x {
