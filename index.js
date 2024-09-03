@@ -955,20 +955,13 @@ function fixSizes() {
         map.setPaintProperty(mapRoute, 'line-width', (ratio * zoomb) / 5);
         map.setPaintProperty(mapRoute + "bg", 'line-width', (ratio * zoomb) / 5);
     }
+
+    // Set a fixed size for stop markers in pixels
     for (var marker of document.querySelectorAll('.stopMarker')) {
-        for (var svug of marker.childNodes) {
-            marker.setAttribute('style', `height: ${(zoomb * ratio).toString()}px; width: ${(zoomb * ratio).toString()}px;`)
-            $(svug).attr('height', (zoomb * ratio).toString() + "px");
-            $(svug).attr('width', (ratio * zoomb).toString() + "px")
-        }
+        marker.style.width = '20px'; // Set fixed width
+        marker.style.height = '20px'; // Set fixed height
     }
-    for (var marker of document.querySelectorAll('.stopMarker')) {
-        for (var svug of marker.childNodes) {
-            marker.setAttribute('style', `height: ${(zoomb * ratio * 2).toString()}px; width: ${(zoomb * ratio * 2).toString()}px;`)
-            $(svug).attr('height', (zoomb * ratio * 2).toString() + "px");
-            $(svug).attr('width', (ratio * zoomb * 2).toString() + "px")
-        }
-    }
+
     for (var marker of document.querySelectorAll('.busMarker')) {
         marker.style.height = `${(zoomb * busRatio).toString()}px`;
         marker.style.width = `${(zoomb * busRatio).toString()}px`;
