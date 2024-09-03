@@ -1313,7 +1313,7 @@ function animateDashArray(timestamp) {
     // Update line-dasharray using the next value in dashArraySequence. The
     // divisor in the expression `timestamp / 50` controls the animation speed.
     const newStep = parseInt(
-        (timestamp / 200) % dashArraySequence.length
+        (timestamp / 1000) % dashArraySequence.length
     );
 
     if (newStep !== step) {
