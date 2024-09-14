@@ -552,7 +552,23 @@ async function schmooveBus(bus, frames) {
 }
 
 function showBusDetails(which) {
-    busMarkers[which][0].getElement().lastChild.style.display = "inline-block";
+    function showBusDetails(which) {
+        busMarkers[which][0].getElement().lastChild.style.display = "inline-block";
+    
+        let nextStopName = "Next stop unavailable";
+        if (this.busesReal[which].nextStop && this.busesReal[which].nextStop[1]) {
+            nextStopName = this.busesReal[which].nextStop[1];
+        }
+    
+        // Display bus details including the next stop
+        busMarkers[which][0].getElement().lastChild.innerHTML = `
+            <h4>${which}: ${this.busesReal[which].route}</h4>
+            <ul>
+                <li>Next Stop: ${nextStopName}</li>
+                <li>Occupancy: ${this.busesReal[which].fullness}%</li>
+            </ul>
+        `;
+    }
 }
 
 function loadRoutes() {
