@@ -23,29 +23,18 @@ body {
 #controls {
     background-color: rgba(255, 255, 255, 0.5);
     position: absolute;
-    top: 1vh; /* Adjusted from 0px for better alignment */
+    top: 0px;
     right: 1vw;
-    width: auto;
-    padding: 1vh; /* Adjust padding for consistent look */
+    width: 20vh;
+    height: calc(5% - 3px);
+    border-radius: 10px;
     display: flex;
     flex-direction: row;
-    gap: 1vh; /* Add spacing between buttons */
-    border-radius: 10px;
+    border-width: 2px;
+    border-color: white;
+    border-style: solid;
     z-index: 2001;
 }
-
-#stopContainer {
-    background-color: #007E57; /* USF Green */
-    padding: 15px;
-    border-radius: 10px;
-    max-width: 300px;  /* Ensure it has a reasonable width for mobile and desktop */
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Adds subtle shadow for better contrast */
-    position: absolute;
-    z-index: 2000;
-    top: 10vh;  /* Adjust position to avoid overlapping the map controls */
-    left: 5vw;  /* Adjust positioning */
-}
-
 
 .SVGcontainer {
     width: calc(100%/3);
@@ -187,23 +176,7 @@ input {
     margin: 0.1em;
     border-radius: 16px;
 }
-#busDetails {
-    overflow-y: auto;
-    max-height: 50vh; /* Limit the height to prevent overflow */
-    margin-top: 10px;
-}
-#busDetails .busItem {
-    padding: 10px;
-    margin-bottom: 10px;
-    border-left: 4px solid #ffc72c; /* USF Gold */
-    background-color: #007E57; /* USF Green */
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
-}
 
-#busDetails .busItem:hover {
-    background-color: rgba(255, 255, 255, 0.3);
-}
 .busDetail {
     all: revert;
     position: absolute;
