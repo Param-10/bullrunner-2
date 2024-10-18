@@ -1116,37 +1116,46 @@ function showStopDetails(stopName) {
     console.log("showStopDetails called for stop:", stopName);
     $("#stopContainer").show();
     var closestBuses = {};
-    console.log("Routes for this stop:", this.stopsReal[stopName].routes);
-
+    
     for (var rout of this.stopsReal[stopName].routes) {
         console.log("Processing route:", rout);
         var stobbe = this.stopsReal[stopName].iAmThisPoint[rout];
-        console.log("Stop point on route:", stobbe);
         if (this.routesReal[rout].buses.length > 0) {
-            console.log("Buses on this route:", this.routesReal[rout].buses);
-            // ... (rest of the existing code for calculating closest buses)
-        } else {
-            console.log("No buses on this route");
+            for (var bussy of this.routesReal[rout].buses) {
+                var eta = getETA(rout, this.busesReal[bussy].speed, this.busesReal[bussy].pointOnPath, stobbe, bussy);
+                if (!closestBuses[rout] || eta < closestBuses[rout].timeTill) {
+                    closestBuses[rout] = {
+                        timeTill: eta,
+                        bus: bussy
+                    };
+                }
+            }
         }
     }
 
-    console.log("Closest buses:", closestBuses);
-
     var conty = document.getElementById('stopContainer');
-    $(conty.firstElementChild).html(stopName);
-    conty.lastElementChild.innerHTML = "";
+    conty.querySelector('.popupTitle').textContent = stopName;
+    var listContainer = conty.querySelector('.popupList');
+    listContainer.innerHTML = "";
 
     for (let bu of Object.keys(closestBuses)) {
-        console.log("Adding bus info for route:", bu);
-        conty.childNodes[6].appendChild(document.createElement('div'));
-        conty.childNodes[6].lastChild.className = busItem;
-        conty.childNodes[6].lastChild.style.borderColor = this.routesReal[bu].color;
-        if (closestBuses[bu].timeTill == 0) {
-            conty.childNodes[6].lastChild.innerText = bu + ": " + closestBuses[bu].bus + " has arrived.";
-        } else {
-            conty.childNodes[6].lastChild.innerText = bu + ": " + closestBuses[bu].bus + " in " + (closestBuses[bu].timeTill / 60).toFixed(1) + " mins @ " + (busesReal[closestBuses[bu].bus].speed * 2.23694).toFixed(2) + "mph";
-        }
-        conty.childNodes[6].lastChild.addEventListener('click', function() { showBusOnMap(closestBuses[bu].bus) }.bind(this));
+        var busDiv = document.createElement('div');
+        busDiv.className = 'busItem';
+        busDiv.style.borderColor = this.routesReal[bu].color;
+        
+        var timeTillMinutes = (closestBuses[bu].timeTill / 60).toFixed(1);
+        var speed = (this.busesReal[closestBuses[bu].bus].speed * 2.23694).toFixed(2); // Convert m/s to mph
+        
+        busDiv.textContent = `${bu}: ${closestBuses[bu].bus} in ${timeTillMinutes} mins @ ${speed} mph`;
+        
+        busDiv.addEventListener('click', () => showBusOnMap(closestBuses[bu].bus));
+        listContainer.appendChild(busDiv);
+    }
+
+    if (Object.keys(closestBuses).length === 0) {
+        var noBusesDiv = document.createElement('div');
+        noBusesDiv.textContent = "No buses currently scheduled for this stop.";
+        listContainer.appendChild(noBusesDiv);
     }
 
     console.log("Final stopContainer innerHTML:", conty.innerHTML);
