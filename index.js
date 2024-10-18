@@ -558,11 +558,20 @@ function loadStops() {
     var routeKeys = Object.keys(this.stops['routes']);
     for (var i = 0; i < routeKeys.length; i++) {
         var routeName = this.stops['routes'][routeKeys[i]][0];
-        if (this.routesReal && this.routesReal[routeName]) {
-            this.routesReal[routeName].path = this.stops['routes'][routeKeys[i]].slice(2);
-        } else {
-            console.warn("Route not found in routesReal:", routeName);
+        if (!this.routesReal[routeName]) {
+            console.warn("Route not found in routesReal, adding:", routeName);
+            this.routesReal[routeName] = {
+                id: routeKeys[i],
+                short: routeName,
+                full: routeName,
+                path: [],
+                buses: [],
+                coords: [],
+                active: true,
+                color: "#" + Math.floor(Math.random()*16777215).toString(16) // Random color
+            };
         }
+        this.routesReal[routeName].path = this.stops['routes'][routeKeys[i]].slice(2);
     }
 
     var stopKeys = Object.keys(this.stops['stops']);
@@ -951,6 +960,7 @@ function renderCircle(routeList, stopName) {
             inner += '</svg>\n';
         }
     } else {
+        // Use gray color for stops with no active routes
         inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill= "#888888" stroke="#FFFFFF" stroke-width="0.3em">\n`
         inner += "<path d='" + arc({ x: 0, y: 0, r: 50 }) + "'></path>\n";
         inner += '</svg>\n';
