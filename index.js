@@ -542,6 +542,10 @@ function updateBuses() {
         console.log(this.busesReal[bus].route)
         this.busesReal[bus].ttn = getETA(this.busesReal[bus].route, this.busesReal[bus].speed, this.busesReal[bus].pointOnPath, this.busesReal[bus].nextStop[0], bus)
     }
+    var currentStopName = document.querySelector('#stopContainer .popupTitle').textContent;
+    if (currentStopName && $("#stopContainer").is(":visible")) {
+        showStopDetails(currentStopName);
+    }
 }
 
 async function schmooveBus(bus, frames) {
@@ -1120,14 +1124,16 @@ function showStopDetails(stopName) {
     for (var rout of this.stopsReal[stopName].routes) {
         console.log("Processing route:", rout);
         var stobbe = this.stopsReal[stopName].iAmThisPoint[rout];
-        if (this.routesReal[rout].buses.length > 0) {
+        if (this.routesReal[rout] && this.routesReal[rout].buses && this.routesReal[rout].buses.length > 0) {
             for (var bussy of this.routesReal[rout].buses) {
-                var eta = getETA(rout, this.busesReal[bussy].speed, this.busesReal[bussy].pointOnPath, stobbe, bussy);
-                if (!closestBuses[rout] || eta < closestBuses[rout].timeTill) {
-                    closestBuses[rout] = {
-                        timeTill: eta,
-                        bus: bussy
-                    };
+                if (this.busesReal[bussy] && this.busesReal[bussy].pointOnPath !== undefined) {
+                    var eta = getETA(rout, this.busesReal[bussy].speed, this.busesReal[bussy].pointOnPath, stobbe, bussy);
+                    if (!closestBuses[rout] || eta < closestBuses[rout].timeTill) {
+                        closestBuses[rout] = {
+                            timeTill: eta,
+                            bus: bussy
+                        };
+                    }
                 }
             }
         }
@@ -1138,24 +1144,24 @@ function showStopDetails(stopName) {
     var listContainer = conty.querySelector('.popupList');
     listContainer.innerHTML = "";
 
-    for (let bu of Object.keys(closestBuses)) {
-        var busDiv = document.createElement('div');
-        busDiv.className = 'busItem';
-        busDiv.style.borderColor = this.routesReal[bu].color;
-        
-        var timeTillMinutes = (closestBuses[bu].timeTill / 60).toFixed(1);
-        var speed = (this.busesReal[closestBuses[bu].bus].speed * 2.23694).toFixed(2); // Convert m/s to mph
-        
-        busDiv.textContent = `${bu}: ${closestBuses[bu].bus} in ${timeTillMinutes} mins @ ${speed} mph`;
-        
-        busDiv.addEventListener('click', () => showBusOnMap(closestBuses[bu].bus));
-        listContainer.appendChild(busDiv);
-    }
-
     if (Object.keys(closestBuses).length === 0) {
         var noBusesDiv = document.createElement('div');
         noBusesDiv.textContent = "No buses currently scheduled for this stop.";
         listContainer.appendChild(noBusesDiv);
+    } else {
+        for (let bu of Object.keys(closestBuses)) {
+            var busDiv = document.createElement('div');
+            busDiv.className = 'busItem';
+            busDiv.style.borderColor = this.routesReal[bu].color;
+            
+            var timeTillMinutes = (closestBuses[bu].timeTill / 60).toFixed(1);
+            var speed = (this.busesReal[closestBuses[bu].bus].speed * 2.23694).toFixed(2); // Convert m/s to mph
+            
+            busDiv.textContent = `${bu}: ${closestBuses[bu].bus} in ${timeTillMinutes} mins @ ${speed} mph`;
+            
+            busDiv.addEventListener('click', () => showBusOnMap(closestBuses[bu].bus));
+            listContainer.appendChild(busDiv);
+        }
     }
 
     console.log("Final stopContainer innerHTML:", conty.innerHTML);
@@ -1230,35 +1236,24 @@ var madeLines = false;
 function getETA(route, speed, start, end, bus) {
     console.log(`getETA called for bus ${bus}: route=${route}, speed=${speed}, start=${start}, end=${end}`);
     if (!this.routesReal[route] || !this.routesReal[route].coords) {
-        console.error("Invalid route data for:", route, "routesReal:", this.routesReal);
-        return 0;
+        console.error("Invalid route data for:", route);
+        return Infinity;
     }
     if (start === undefined || end === undefined || start < 0 || end < 0 ||
         start >= this.routesReal[route].coords.length ||
         end >= this.routesReal[route].coords.length) {
         console.error("Invalid start or end for bus:", bus, "start:", start, "end:", end);
-        return 0;
+        return Infinity;
     }
-    var toRet;
-    if (start === end) {
-        return 0;
+    
+    var distance;
+    if (end < start) {
+        distance = turf.length(turf.lineString(this.routesReal[route].coords.slice(start).concat(this.routesReal[route].coords.slice(0, end + 1))), { units: 'kilometers' });
+    } else {
+        distance = turf.length(turf.lineString(this.routesReal[route].coords.slice(start, end + 1)), { units: 'kilometers' });
     }
-    console.log(turf.distance(turf.point(this.routesReal[route].coords[start]), turf.point(this.routesReal[route].coords[end]), { units: 'kilometers' }).toFixed(1) + "km distance betweeen start and stop of bus " + bus + 'points: ' + start + " " + end);
-    if (turf.distance(turf.point(this.routesReal[route].coords[start]), turf.point(this.routesReal[route].coords[end]), { units: 'kilometers' }) < 0.05) {
-        return 0;
-    }
-    try {
-        if (end < start) {
-            toRet = (turf.length(turf.lineString(this.routesReal[route].coords.slice(start, this.routesReal[route].coords.length - 1).concat(this.routesReal[route].coords.slice(0, end))), { units: 'kilometers' }) * 1000) / speed;
-        } else {
-            toRet = (turf.length(turf.lineString(this.routesReal[route].coords.slice(start, end + 1)), { units: 'kilometers' }) * 1000) / speed;
-        }
-    } catch (e) {
-        if (e.message == "coordinates must be an array of two or more positions") {
-            toRet = 0;
-        }
-    }
-    return toRet;
+    
+    return (distance * 1000) / (speed || 0.1);  // Return time in seconds, avoid division by zero
 }
 // --------------------------------------------------------------------------
 
