@@ -1127,7 +1127,6 @@ function showStopDetails(stopName) {
                 var newwe = this.busesReal[bussy].pointOnPath;
                 if ((oldde < stobbe && newwe < stobbe) || (oldde > stobbe && newwe > stobbe)) {
                     if (newwe > oldde) {
-                        console.log('I S')
                         closestBuses[rout].timeTill = getETA(rout, this.busesReal[bussy].speed, newwe, stobbe, bussy).toFixed(1);
                         closestBuses[rout].bus = bussy;
                     }
@@ -1139,19 +1138,29 @@ function showStopDetails(stopName) {
         }
     }
     var conty = document.getElementById('stopContainer');
-    $(conty.firstElementChild).html(stopName);
-    conty.lastElementChild.innerHTML = "";
+    conty.innerHTML = ''; // Clear previous content
+    
+    // Add stop name
+    var nameElement = document.createElement('h3');
+    nameElement.textContent = stopName;
+    conty.appendChild(nameElement);
+    
+    // Add bus arrival times
+    var busListElement = document.createElement('div');
+    busListElement.className = 'bus-list';
     for (let bu of Object.keys(closestBuses)) {
-        conty.childNodes[6].appendChild(document.createElement('div'));
-        conty.childNodes[6].lastChild.className = busItem;
-        conty.childNodes[6].lastChild.style.borderColor = this.routesReal[bu].color;
+        var busElement = document.createElement('div');
+        busElement.className = busItem;
+        busElement.style.borderColor = this.routesReal[bu].color;
         if (closestBuses[bu].timeTill == 0) {
-            conty.childNodes[6].lastChild.innerText = bu + ": " + closestBuses[bu].bus + " has arrived.";
+            busElement.textContent = `${bu}: ${closestBuses[bu].bus} has arrived.`;
         } else {
-            conty.childNodes[6].lastChild.innerText = bu + ": " + closestBuses[bu].bus + " in " + (closestBuses[bu].timeTill / 60).toFixed(1) + " mins @ " + (busesReal[closestBuses[bu].bus].speed * 2.23694).toFixed(2) + "mph"
+            busElement.textContent = `${bu}: ${closestBuses[bu].bus} in ${(closestBuses[bu].timeTill / 60).toFixed(1)} mins @ ${(this.busesReal[closestBuses[bu].bus].speed * 2.23694).toFixed(2)}mph`;
         }
-        conty.childNodes[6].lastChild.addEventListener('click', function() { showBusOnMap(closestBuses[bu].bus) }.bind(this))
+        busElement.addEventListener('click', () => showBusOnMap(closestBuses[bu].bus));
+        busListElement.appendChild(busElement);
     }
+    conty.appendChild(busListElement);
 }
 
 function showStopOnMap(stopName) {
