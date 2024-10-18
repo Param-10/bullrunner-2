@@ -1055,17 +1055,20 @@ function renderCircle(routeList, stopName) {
     console.log("Stop data:", this.stopsReal[stopName]);
     console.log("Creating marker for stop:", stopName, "at position:", [this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
 
-    let routList = routeList.filter(route => this.routesReal[route] && this.routesReal[route].active);
-    console.log("Active routes for this stop:", routList);
+    let activeRoutes = routeList.filter(route => 
+        this.routesReal[route] && 
+        (this.routesReal[route].active || this.routesReal[route].buses.length > 0)
+    );
+    console.log("Active routes for this stop:", activeRoutes);
 
     let svg = document.createElement('div');
     svg.className = 'stopMarker';
     svg.id = 'stop: ' + stopName;
     let inner = '';
-    if (routList.length > 0) {
-        for (var i = 0; i < routList.length; i++) {
-            inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill= "${this.routesReal[routList[i]].color}" stroke="#FFFFFF" stroke-width="0.3em">\n`
-            inner += "<path d='" + arc({ x: 0, y: 0, r: 50, start: ((360 / routList.length) * i), end: ((360 / routList.length) * (i + 1)) }) + "'></path>\n";
+    if (activeRoutes.length > 0) {
+        for (var i = 0; i < activeRoutes.length; i++) {
+            inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill= "${this.routesReal[activeRoutes[i]].color}" stroke="#FFFFFF" stroke-width="0.3em">\n`
+            inner += "<path d='" + arc({ x: 0, y: 0, r: 50, start: ((360 / activeRoutes.length) * i), end: ((360 / activeRoutes.length) * (i + 1)) }) + "'></path>\n";
             inner += '</svg>\n';
         }
     } else {
