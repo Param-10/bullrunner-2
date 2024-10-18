@@ -683,7 +683,6 @@ function loadStops() {
             this.routesReal[routeName].path = this.stops['routes'][routeKeys[i]].slice(2);
         } else {
             console.warn("Route not found in routesReal:", routeName);
-            console.log("Available routes in routesReal:", Object.keys(this.routesReal));
         }
     }
 
@@ -718,7 +717,9 @@ function loadStops() {
             var stopId = this.routesReal[routeName].path[i][1];
             var stopName = this.stopsHashMap[stopId];
             if (this.stopsReal[stopName]) {
-                this.stopsReal[stopName].routes.push(routeName);
+                if (!this.stopsReal[stopName].routes.includes(routeName)) {
+                    this.stopsReal[stopName].routes.push(routeName);
+                }
             } else {
                 console.warn("Stop not found:", stopName);
             }
@@ -734,7 +735,6 @@ function loadStops() {
             console.warn("No route points for route:", routeName);
         }
         this.routesReal[routeName].stopIndices = {};
-        this.renderRoute(routeName);
     }
 
     console.log("Calculating stop indices...");
@@ -1055,14 +1055,7 @@ function renderCircle(routeList, stopName) {
     console.log("Stop data:", this.stopsReal[stopName]);
     console.log("Creating marker for stop:", stopName, "at position:", [this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
 
-    let routList = [];
-    let bruhMoment = JSON.parse(JSON.stringify(this.routesReal));
-    for (var routte of routeList) {
-        var hello = bruhMoment[routte].active;
-        if (hello) {
-            routList.push(routte);
-        }
-    }
+    let routList = routeList.filter(route => this.routesReal[route] && this.routesReal[route].active);
     console.log("Active routes for this stop:", routList);
 
     let svg = document.createElement('div');
@@ -1071,7 +1064,7 @@ function renderCircle(routeList, stopName) {
     let inner = '';
     if (routList.length > 0) {
         for (var i = 0; i < routList.length; i++) {
-            inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill= "${bruhMoment[routList[i]].color}" stroke="#FFFFFF" stroke-width="0.3em">\n`
+            inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" fill= "${this.routesReal[routList[i]].color}" stroke="#FFFFFF" stroke-width="0.3em">\n`
             inner += "<path d='" + arc({ x: 0, y: 0, r: 50, start: ((360 / routList.length) * i), end: ((360 / routList.length) * (i + 1)) }) + "'></path>\n";
             inner += '</svg>\n';
         }
