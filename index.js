@@ -529,7 +529,7 @@ function loadRoutes() {
                 coords: [],
                 centre: [parseFloat(this.routes[i].longitude), parseFloat(this.routes[i].latitude)],
                 zoom: this.routes[i].distance,
-                active: !Object.keys(this.routes[i]).includes("serviceTime"),
+                active: true,
                 color: this.routes[i].color
             };
             if (this.routesReal[this.routes[i].nameOrig].short === null) {
@@ -943,10 +943,7 @@ function renderCircle(routeList, stopName) {
     console.log("Stop data:", this.stopsReal[stopName]);
     console.log("Creating marker for stop:", stopName, "at position:", [this.stopsReal[stopName].long, this.stopsReal[stopName].lat]);
 
-    let activeRoutes = routeList.filter(route => 
-        this.routesReal[route] && 
-        (this.routesReal[route].active || this.routesReal[route].buses.length > 0)
-    );
+    let activeRoutes = routeList.filter(route => this.routesReal[route]);
     console.log("Active routes for this stop:", activeRoutes);
 
     let svg = document.createElement('div');
