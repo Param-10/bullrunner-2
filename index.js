@@ -4,7 +4,18 @@ var stops;
 var buses;
 var alerts;
 
-var excludeList = ['Blue Event Detour', 'Orange Event Detour', 'Red Event Detour']
+var excludeList = [
+    'Blue Event Detour', 
+    'Orange Event Detour', 
+    'Red Event Detour',
+    'Green Event Detour',
+    'Purple Express',
+    'Route Blue',
+    'Route Brown',
+    'Route Green',
+    'Route Red',
+    'Brown Event Detour'
+];
 var excludeMyIDs = ['36235', '42408', '42980', '43015', '45753', '43017']
 var routeItem = "popupItem route";
 var busItem = "popupItem bus"
@@ -834,7 +845,6 @@ function updateBusVisibility() {
         var busElement = document.getElementById("bus" + bus);
         if (busElement) {
             if (Object.keys(selectedRoutes).includes(this.busesReal[bus].route) && 
-                !excludeMyIDs.includes(bus) && 
                 !excludeList.includes(this.busesReal[bus].route)) {
                 busElement.style.display = "block";
             } else {
@@ -905,7 +915,6 @@ function updateBusVisibility() {
         var busElement = document.getElementById("bus" + bus);
         if (busElement) {
             if (Object.keys(selectedRoutes).includes(this.busesReal[bus].route) && 
-                !excludeMyIDs.includes(bus) && 
                 !excludeList.includes(this.busesReal[bus].route)) {
                 busElement.style.display = "block";
             } else {
