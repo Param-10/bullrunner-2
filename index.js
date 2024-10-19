@@ -833,7 +833,9 @@ function updateBusVisibility() {
     for (var bus of Object.keys(this.busesReal)) {
         var busElement = document.getElementById("bus" + bus);
         if (busElement) {
-            if (Object.keys(selectedRoutes).includes(this.busesReal[bus].route)) {
+            if (Object.keys(selectedRoutes).includes(this.busesReal[bus].route) && 
+                !excludeMyIDs.includes(bus) && 
+                !excludeList.includes(this.busesReal[bus].route)) {
                 busElement.style.display = "block";
             } else {
                 busElement.style.display = "none";
@@ -902,7 +904,9 @@ function updateBusVisibility() {
     for (var bus of Object.keys(this.busesReal)) {
         var busElement = document.getElementById("bus" + bus);
         if (busElement) {
-            if (Object.keys(selectedRoutes).includes(this.busesReal[bus].route)) {
+            if (Object.keys(selectedRoutes).includes(this.busesReal[bus].route) && 
+                !excludeMyIDs.includes(bus) && 
+                !excludeList.includes(this.busesReal[bus].route)) {
                 busElement.style.display = "block";
             } else {
                 busElement.style.display = "none";
