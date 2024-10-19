@@ -4,18 +4,7 @@ var stops;
 var buses;
 var alerts;
 
-var excludeList = [
-    'Blue Event Detour', 
-    'Orange Event Detour', 
-    'Red Event Detour',
-    'Green Event Detour',
-    'Purple Express',
-    'Route Blue',
-    'Route Brown',
-    'Route Green',
-    'Route Red',
-    'Brown Event Detour'
-];
+var excludeList = ['Blue Event Detour', 'Orange Event Detour', 'Red Event Detour']
 var excludeMyIDs = ['36235', '42408', '42980', '43015', '45753', '43017']
 var routeItem = "popupItem route";
 var busItem = "popupItem bus"
@@ -298,9 +287,9 @@ async function setBusesFirst(what) {
         current.append(document.createElement("div"));
         current.lastChild.className = stopItem;
         let servicedByRoute = "";
-        for (var route of this.stopsReal[stopId].routes) {
-            if (this.stopsReal[stopId].times[route] && !excludeList.includes(route)) {
-                servicedByRoute += `<div>${route}: ${this.stopsReal[stopId].times[route]}</div>`;
+        for (var route of this.stopsReal[keys[i]].routes) {
+            if (this.routesReal[route].active) {
+                servicedByRoute += "| " + route + " |";
             }
         }
         current.lastChild.innerHTML = keys[i] + "</br><p style='font-size: 1.5vh; font-weight: normal;'>" + servicedByRoute + "</p>";
@@ -845,6 +834,7 @@ function updateBusVisibility() {
         var busElement = document.getElementById("bus" + bus);
         if (busElement) {
             if (Object.keys(selectedRoutes).includes(this.busesReal[bus].route) && 
+                !excludeMyIDs.includes(bus) && 
                 !excludeList.includes(this.busesReal[bus].route)) {
                 busElement.style.display = "block";
             } else {
@@ -915,6 +905,7 @@ function updateBusVisibility() {
         var busElement = document.getElementById("bus" + bus);
         if (busElement) {
             if (Object.keys(selectedRoutes).includes(this.busesReal[bus].route) && 
+                !excludeMyIDs.includes(bus) && 
                 !excludeList.includes(this.busesReal[bus].route)) {
                 busElement.style.display = "block";
             } else {
