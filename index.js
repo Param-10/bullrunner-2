@@ -298,9 +298,9 @@ async function setBusesFirst(what) {
         current.append(document.createElement("div"));
         current.lastChild.className = stopItem;
         let servicedByRoute = "";
-        for (var route of this.stopsReal[keys[i]].routes) {
-            if (this.routesReal[route].active) {
-                servicedByRoute += "| " + route + " |";
+        for (var route of this.stopsReal[stopId].routes) {
+            if (this.stopsReal[stopId].times[route] && !excludeList.includes(route)) {
+                servicedByRoute += `<div>${route}: ${this.stopsReal[stopId].times[route]}</div>`;
             }
         }
         current.lastChild.innerHTML = keys[i] + "</br><p style='font-size: 1.5vh; font-weight: normal;'>" + servicedByRoute + "</p>";
