@@ -620,7 +620,7 @@ function showBusDetails(which) {
                 <li>Occupancy: ${this.busesReal[which].fullness}%</li>
             </ul>
         `;
-}
+    }
 
 
 function loadRoutes() {
@@ -1228,12 +1228,10 @@ var madeLines = false;
 
 function getETA(route, speed, start, end, bus) {
     console.log(`getETA called for bus ${bus}: route=${route}, speed=${speed}, start=${start}, end=${end}`);
-    
     if (!this.routesReal[route] || !this.routesReal[route].coords) {
         console.error("Invalid route data for:", route);
         return Infinity;
     }
-    
     if (start === undefined || end === undefined || start < 0 || end < 0 ||
         start >= this.routesReal[route].coords.length ||
         end >= this.routesReal[route].coords.length) {
@@ -1241,27 +1239,15 @@ function getETA(route, speed, start, end, bus) {
         return Infinity;
     }
     
-    // Calculate the distance between the current position and the next stop
-    let distance;
+    var distance;
     if (end < start) {
         distance = turf.length(turf.lineString(this.routesReal[route].coords.slice(start).concat(this.routesReal[route].coords.slice(0, end + 1))), { units: 'kilometers' });
     } else {
         distance = turf.length(turf.lineString(this.routesReal[route].coords.slice(start, end + 1)), { units: 'kilometers' });
     }
     
-    // Use a minimum speed threshold to avoid unrealistic ETAs
-    const minSpeed = 5 / 3.6; // Convert 5 km/h to m/s
-    const adjustedSpeed = Math.max(speed, minSpeed);
-    
-    // Calculate ETA in seconds
-    let eta = (distance * 1000) / adjustedSpeed;
-    
-    // If the next stop is very close (e.g., within 500 meters), cap the ETA at a maximum of 5 minutes
-    if (distance < 0.5) { // Distance less than 500 meters
-        eta = Math.min(eta, 5 * 60); // Cap at 5 minutes (300 seconds)
-    }
-    
-    return eta;
+    // Avoid division by zero, use a minimum speed of 0.1 m/s
+    return (distance * 1000) / Math.max(speed, 0.1);
 }
 // --------------------------------------------------------------------------
 
