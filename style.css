@@ -187,6 +187,7 @@ input {
     aspect-ratio: 3/1;
     width: auto;
     box-sizing: border-box;
+    z-index: 2000;
 }
 
 .busDetail>h4 {

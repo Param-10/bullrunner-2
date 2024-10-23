@@ -472,12 +472,18 @@ function updateBuses() {
             }
         }
 
+        // Snap bus to closest point on path
+        if (shortestDistance > 0.05) {  // Threshold can be adjusted based on acceptable deviation
+            console.warn(`Bus ${bussy} is off-route by ${shortestDistance.toFixed(2)} km, snapping to nearest path.`);
+            bus.position = route.coords[closestIndex];
+        }
+
         bus.pointOnPath = closestIndex;
 
         // Calculate speed based on movement
         if (bus.lastPosition) {
             var distanceMoved = turf.distance(turf.point(bus.lastPosition), turf.point(bus.position), { units: 'kilometers' });
-            bus.speed = (distanceMoved * 1000) / 10; // Assuming updates every 10 seconds
+            bus.speed = Math.max((distanceMoved * 1000) / 10, 0.1); // Assuming updates every 10 seconds, avoid zero speed
         }
         bus.lastPosition = bus.position;
 
@@ -590,7 +596,6 @@ function updateBuses() {
         showStopDetails(currentStopName);
     }
 }
-
 async function schmooveBus(bus, frames) {
     for (let frame of frames) {
         this.busMarkers[bus][0].setLngLat(frame);
