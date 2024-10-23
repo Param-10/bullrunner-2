@@ -211,11 +211,3 @@ input {
     color: white;
     white-space: nowrap;
 }
-
-.busItem {
-    padding: 10px;
-    margin: 5px 0;
-    border-left: 5px solid;
-    background-color: #f0f0f0;
-    cursor: pointer;
-}
