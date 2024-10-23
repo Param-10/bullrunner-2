@@ -606,6 +606,7 @@ async function schmooveBus(bus, frames) {
 
 function showBusDetails(which) {
         busMarkers[which][0].getElement().lastChild.style.display = "inline-block";
+        console.log("Bus ID:", bus, "Route:", this.busesReal[bus].route, "Next Stop:", this.busesReal[bus].nextStop);
     
         let nextStopName = "Next stop unavailable";
         if (this.busesReal[which].nextStop && this.busesReal[which].nextStop[1]) {
@@ -1111,6 +1112,7 @@ function checkStopMarkersInView() {
 
 function showStopDetails(stopName) {
     console.log("showStopDetails called for stop:", stopName);
+    
     $("#stopContainer").show();
     var closestBuses = {};
     
