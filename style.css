@@ -109,6 +109,7 @@ body {
 .popupItem.alert {
     padding: 1%;
     border-color: white;
+    z-index: 2000;
 }
 
 .stopMarker {
