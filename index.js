@@ -4,7 +4,7 @@ var stops;
 var buses;
 var alerts;
 
-var excludeList = ['Blue Event Detour', 'Orange Event Detour', 'Red Event Detour']
+var excludeList = ['Blue Event Detour', 'Orange Event Detour', 'Red Event Detour', 'Brown Event Detour']
 var excludeMyIDs = ['36235', '42408', '42980', '43015', '45753', '43017']
 var routeItem = "popupItem route";
 var busItem = "popupItem bus"
@@ -365,7 +365,7 @@ function cleanup() {
         if (!(Object.keys(this.routesReal).includes(this.busesReal[bussy].route))) {
             continue;
         }
-        var shortest = 1000;
+        var shortest = Infinity;
         var indi = 0;
         for (var i = 0; i < this.routesReal[this.busesReal[bussy].route].coords.length; i++) {
             if (turf.distance(turf.point(this.busesReal[bussy].position), turf.point([parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][1]), parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][0])])) < shortest) {
