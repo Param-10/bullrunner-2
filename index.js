@@ -448,48 +448,39 @@ var busMarkers = {};
 var stopsHaveBuses = false;
 
 function updateBuses() {
-    // Clear buses from each route
-    for (var rout of Object.keys(this.routesReal)) {
-        this.routesReal[rout].buses = [];
-    }
-
-    // Update each bus's position on its route
-    for (var bussy of Object.keys(this.busesReal)) {
-        var bus = this.busesReal[bussy];
-        var route = this.routesReal[bus.route];
-
-        if (!route) continue; // Skip if route is not found
-
-        // Find the closest point on the route to the bus's current position
-        var shortestDistance = Infinity;
-        var closestIndex = 0;
-
-        for (var i = 0; i < route.coords.length; i++) {
-            var distance = turf.distance(turf.point(bus.position), turf.point(route.coords[i]));
-            if (distance < shortestDistance) {
-                shortestDistance = distance;
-                closestIndex = i;
+    for (var bussy of Object.keys(busesReal)) {
+        if (!(Object.keys(this.routesReal).includes(this.busesReal[bussy].route))) {
+            continue;
+        }
+        var shortest = Infinity;
+        var indi = 0;
+        var final = (Object.keys(this.routesReal[this.busesReal[bussy].route].stopIndices)[Object.keys(this.routesReal[this.busesReal[bussy].route].stopIndices).length - 1])
+        
+        for (var i = 0; i < this.routesReal[this.busesReal[bussy].route].coords.length; i++) {
+            var distance = turf.distance(turf.point(this.busesReal[bussy].position), turf.point(this.routesReal[this.busesReal[bussy].route].coords[i]));
+            if (distance < shortest) {
+                shortest = distance;
+                indi = i;
             }
         }
-
-        bus.pointOnPath = closestIndex;
-
-        // Calculate speed based on movement
-        if (bus.lastPosition) {
-            var distanceMoved = turf.distance(turf.point(bus.lastPosition), turf.point(bus.position), { units: 'kilometers' });
-            bus.speed = (distanceMoved * 1000) / 10; // Assuming updates every 10 seconds
+        
+        this.busesReal[bussy].pointOnPath = indi;
+        
+        // Calculate speed based on position change
+        if (this.busesReal[bussy].lastPosition) {
+            var distanceMoved = turf.distance(turf.point(this.busesReal[bussy].lastPosition), turf.point(this.busesReal[bussy].position), {units: 'kilometers'});
+            this.busesReal[bussy].speed = (distanceMoved * 1000) / 10; // Assuming 10 seconds between updates
         }
-        bus.lastPosition = bus.position;
-
-        // Determine the next stop for the bus
-        for (var j = closestIndex; j < route.coords.length; j++) {
-            if (route.stopIndices[j]) {
-                bus.nextStop = [j, route.stopIndices[j]];
+        this.busesReal[bussy].lastPosition = this.busesReal[bussy].position;
+        
+        // Find next stop
+        for (var i = indi; i < final; i++) {
+            if (this.routesReal[this.busesReal[bussy].route].stopIndices[i]) {
+                this.busesReal[bussy].nextStop = [i, this.routesReal[this.busesReal[bussy].route].stopIndices[i]];
                 break;
             }
         }
     }
-
     // Update or create markers for each active bus
     for (let busId of Object.keys(this.busesReal).sort()) {
         var bus = this.busesReal[busId];
@@ -551,20 +542,12 @@ function updateBuses() {
         markerElement.childNodes[2].setAttribute('style', `padding: ${0.2 * (zoomb * busRatio)}px; transform: rotate(${bus.bearing}deg);`);
     }
 
-    // Update ETA and show stop details if applicable
-    for (var b of Object.keys(this.busesReal)) {
-        var keyRoute = this.busesReal[b].route;
-
-        if (!Object.keys(this.routesReal).includes(keyRoute)) continue;
-
-        if (document.getElementById('stopContainer').style.display !== "none") {
-            this.showStopDetails(document.getElementById('stopContainer').firstElementChild.innerText);
-        }
-        
-        console.log(this.busesReal[b].route);
-        
-        this.busesReal[b].ttn = getETA(this.busesReal[b].route, this.busesReal[b].speed, this.busesReal[b].pointOnPath, this.busesReal[b].nextStop[0], b);
+    // Update stop details if a stop is currently selected
+    var currentStopName = document.querySelector('#stopContainer .popupTitle').textContent;
+    if (currentStopName && $("#stopContainer").is(":visible")) {
+        showStopDetails(currentStopName);
     }
+
 }
 
 async function schmooveBus(bus, frames) {
