@@ -360,6 +360,7 @@ async function setBusesFirst(what) {
     updateBusVisibility();
 }
 
+// Update cleanup function to handle undefined next stops
 function cleanup() {
     for (var bussy of Object.keys(busesReal)) {
         if (!(Object.keys(this.routesReal).includes(this.busesReal[bussy].route))) {
@@ -368,15 +369,20 @@ function cleanup() {
         var shortest = Infinity;
         var indi = 0;
         for (var i = 0; i < this.routesReal[this.busesReal[bussy].route].coords.length; i++) {
-            if (turf.distance(turf.point(this.busesReal[bussy].position), turf.point([parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][1]), parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][0])])) < shortest) {
-                shortest = turf.distance(turf.point(this.busesReal[bussy].position), turf.point([parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][1]), parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][0])]));
+            var distance = turf.distance(turf.point(this.busesReal[bussy].position), 
+                                         turf.point([parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][1]), 
+                                                     parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][0])]));
+            if (distance < shortest) {
+                shortest = distance;
                 indi = i;
             }
         }
         this.busesReal[bussy].pointOnPath = indi;
+
+        // Find next stop
         for (var x = indi; x < this.routesReal[this.busesReal[bussy].route].coords.length; x++) {
-            if (Object.keys(this.routesReal[this.busesReal[bussy].route].stopIndices).includes(x)) {
-                this.busesReal[bussy].nextStop = [x.toString, this.routesReal[this.busesReal[bussy].route].stopIndices[x]];
+            if (Object.keys(this.routesReal[this.busesReal[bussy].route].stopIndices).includes(x.toString())) {
+                this.busesReal[bussy].nextStop = [x.toString(), this.routesReal[this.busesReal[bussy].route].stopIndices[x]];
                 break;
             }
         }
