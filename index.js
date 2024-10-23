@@ -448,44 +448,99 @@ var busMarkers = {};
 var stopsHaveBuses = false;
 
 function updateBuses() {
+    for (var rout of Object.keys(this.routesReal)) {
+        this.routesReal[rout].buses = [];
+    }
     for (var bussy of Object.keys(busesReal)) {
         if (!(Object.keys(this.routesReal).includes(this.busesReal[bussy].route))) {
             continue;
         }
-        var shortest = Infinity;
+        var shortest = 1000;
         var indi = 0;
         var final = (Object.keys(this.routesReal[this.busesReal[bussy].route].stopIndices)[Object.keys(this.routesReal[this.busesReal[bussy].route].stopIndices).length - 1])
-        
-        for (var i = 0; i < this.routesReal[this.busesReal[bussy].route].coords.length; i++) {
-            var distance = turf.distance(turf.point(this.busesReal[bussy].position), turf.point(this.routesReal[this.busesReal[bussy].route].coords[i]));
-            if (distance < shortest) {
-                shortest = distance;
-                indi = i;
+        if (busesReal[bussy].pointOnPath < final) {
+            for (var i = busesReal[bussy].pointOnPath; i < final; i++) {
+                if (turf.distance(turf.point(this.busesReal[bussy].position), turf.point(this.routesReal[this.busesReal[bussy].route].coords[i])) < shortest) {
+                    shortest = turf.distance(turf.point(this.busesReal[bussy].position), turf.point(this.routesReal[this.busesReal[bussy].route].coords[i]));
+                    indi = i;
+                }
             }
-        }
-        
-        this.busesReal[bussy].pointOnPath = indi;
-        
-        // Calculate speed based on position change
-        if (this.busesReal[bussy].lastPosition) {
-            var distanceMoved = turf.distance(turf.point(this.busesReal[bussy].lastPosition), turf.point(this.busesReal[bussy].position), {units: 'kilometers'});
-            this.busesReal[bussy].speed = (distanceMoved * 1000) / 10; // Assuming 10 seconds between updates
-        }
-        this.busesReal[bussy].lastPosition = this.busesReal[bussy].position;
-        
-        // Find next stop
-        for (var i = indi; i < final; i++) {
-            if (this.routesReal[this.busesReal[bussy].route].stopIndices[i]) {
-                this.busesReal[bussy].nextStop = [i, this.routesReal[this.busesReal[bussy].route].stopIndices[i]];
-                break;
+            this.busesReal[bussy].pointOnPath = indi;
+            if (indi < final) {
+                for (var i = this.busesReal[bussy].pointOnPath; i < this.routesReal[this.busesReal[bussy].route].coords.length; i++) {
+                    if (Object.keys(this.routesReal[this.busesReal[bussy].route].stopIndices).includes(i.toString())) {
+                        this.busesReal[bussy].nextStop = [i, this.routesReal[this.busesReal[bussy].route].stopIndices[i]]
+                        break;
+                    }
+                }
+            }
+        } else {
+            for (var i = 0; i < this.routesReal[this.busesReal[bussy].route].coords.length; i++) {
+                if (turf.distance(turf.point(this.busesReal[bussy].position), turf.point([parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][1]), parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][0])])) < shortest) {
+                    shortest = turf.distance(turf.point(this.busesReal[bussy].position), turf.point([parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][1]), parseFloat(this.routesReal[this.busesReal[bussy].route].coords[i][0])]));
+                    indi = i;
+                }
+            }
+            for (var x = this.busesReal[bussy].pointOnPath; x < this.routesReal[this.busesReal[bussy].route].coords.length; x++) {
+                if (Object.keys(this.routesReal[this.busesReal[bussy].route].stopIndices).includes(x)) {
+                    this.busesReal[bussy].nextStop = [x.toString, this.routesReal[this.busesReal[bussy].route].stopIndices[x]];
+                    break;
+                }
             }
         }
     }
 
-    // Update stop details if a stop is currently selected
-    var currentStopName = document.querySelector('#stopContainer .popupTitle').textContent;
-    if (currentStopName && $("#stopContainer").is(":visible")) {
-        showStopDetails(currentStopName);
+    for (let bus of Object.keys(this.busesReal).toSorted()) {
+        if (!(Object.keys(this.routesReal).includes(this.busesReal[bussy].route))) {
+            continue;
+        }
+        if (this.busesReal[bus].active && Object.keys(this.routesReal).includes(busesReal[bus].route)) {
+            this.routesReal[this.busesReal[bus].route].buses.push(bus);
+            if (document.getElementById("bus" + bus) === null) {
+                let div = document.createElement('div');
+                div.id = "bus" + bus;
+                div.className = 'busMarker';
+                let inner = "";
+                inner += `<svg height='20px' width='20px' style="position: absolute;" viewbox="-50 -50 100 100" stroke="#FFFFFF" fill="${this.routesReal[this.busesReal[bus].route].color}" stroke-width="1em">\n`
+                inner += "<path d='" + arc({ x: 0, y: 0, r: 45 }) + "'></path>\n";
+                inner += '</svg>\n';
+                inner += `<img style="transform: rotate(${this.busesReal[bus].bearing}deg);" src="assets/busPointer.svg?sanitize=true" height='20px' width='20px'>`
+                div.innerHTML = inner;
+                div.appendChild(document.createElement('div'))
+                div.lastChild.className = 'busDetail';
+                div.lastChild.innerHTML = `<h4>${bus}: ${this.busesReal[bus].route}</h4><ul><li>Next Stop: ${this.busesReal[bus].nextStop[1]}</li><li>Occupancy: ${this.busesReal[bus].fullness}%</li></ul>`
+                div.addEventListener('click', function(e) {; if (e.target === div || Array.from(div.childNodes).includes(e.target)) { showBusDetails(bus) } }.bind(this));
+                busMarkers[bus] = [new mapboxgl.Marker(div), []];
+                busMarkers[bus][0].setLngLat(this.busesReal[bus].position)
+                busMarkers[bus][0].addTo(map);
+                div.lastChild.style.display = "none";
+                div.lastChild.appendChild(document.createElement('div'));
+                div.lastChild.lastChild.className = 'x';
+                div.lastChild.lastChild.innerHTML = "<img src='assets/x.svg' class='SVGicon'></img>"
+                let bruh = div.lastChild.lastChild;
+                div.lastChild.lastChild.addEventListener('click', function(e) { if (e.target === bruh || Array.from(bruh.childNodes).includes(e.target)) { div.lastChild.style.display = 'none'; } }.bind(this));
+            } else {
+                this.busMarkers[bus][1] = generateMovement([this.busMarkers[bus][0].getLngLat().lng, this.busMarkers[bus][0].getLngLat().lat], this.busesReal[bus].position);
+                $($(this.busMarkers[bus][0].getElement().lastChild).find("ul")).find('li')[0].innerText = `Next Stop: ${this.busesReal[bus].nextStop[1]}`;
+                $($(this.busMarkers[bus][0].getElement().lastChild).find("ul")).find('li')[1].innerText = `Occupancy: ${this.busesReal[bus].fullness}%`;
+            }
+            this.frame = 0;
+            schmooveBus(bus, busMarkers[bus][1]);
+            document.getElementById("bus" + bus).childNodes[2].setAttribute('style', `padding: ${0.2 * (zoomb * busRatio)}px; transform: rotate(${this.busesReal[bus].bearing}deg);`);
+        }
+    }
+    for (var bus of Object.keys(this.busesReal)) {
+        var key = this.busesReal[bus].route;
+
+        if (!Object.keys(this.routesReal).includes(key)) {
+            continue
+        }
+
+        if (document.getElementById('stopContainer').style.display !== "none") {
+            this.showStopDetails(document.getElementById('stopContainer').firstElementChild.innerText)
+        }
+        console.log(this.busesReal[bus].route)
+        this.busesReal[bus].ttn = getETA(this.busesReal[bus].route, this.busesReal[bus].speed, this.busesReal[bus].pointOnPath, this.busesReal[bus].nextStop[0], bus)
     }
 }
 
