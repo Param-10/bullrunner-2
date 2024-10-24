@@ -19,7 +19,7 @@ BullRunner is a web application designed to help users track university buses in
 - CSS3
 - JavaScript
 - jQuery
-- Google Maps API
+- Mapbox API
 - Axios
 
 ### API Integration
