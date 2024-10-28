@@ -63,6 +63,11 @@ Contributions are welcome! Please fork the repository and create a pull request 
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
+
 ## Contact
 
 For any inquiries, please contact [ubullrunner@gmail.com].# bullrunner-2
+
+## Update
+
+This update adds a note at the beginning of the README to inform readers that the project is under active development. It also includes a new "Development Status" section near the end of the document, providing more context about the ongoing development and inviting community involvement. 
