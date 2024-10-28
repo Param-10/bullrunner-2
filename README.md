@@ -22,9 +22,6 @@ BullRunner is a web application designed to help users track university buses in
 - Mapbox API
 - Axios
 
-### API Integration
-- PassioGo API
-
 ## Setup
 
 1. Clone the repository:
