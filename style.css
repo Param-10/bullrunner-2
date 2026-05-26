@@ -525,8 +525,9 @@ button.busItem {
 .stopMarker {
     width: 24px;
     height: 24px;
+    z-index: 6;
     border-radius: 999px;
-    filter: drop-shadow(0 3px 7px rgba(8, 21, 17, 0.2));
+    filter: drop-shadow(0 4px 9px rgba(8, 21, 17, 0.24));
     transition: transform 160ms ease, filter 160ms ease;
 }
 
@@ -538,7 +539,9 @@ button.busItem {
     background:
         radial-gradient(circle at 50% 50%, #ffffff 0 23%, transparent 24%),
         radial-gradient(circle at 50% 50%, var(--stop-color, var(--brand-green)) 0 48%, #ffffff 49% 65%, color-mix(in srgb, var(--stop-color, var(--brand-green)) 78%, #101914) 66% 100%);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.92), 0 8px 18px rgba(8, 21, 17, 0.22);
+    box-shadow:
+        0 0 0 3px rgba(255, 255, 255, 0.94),
+        0 8px 18px rgba(8, 21, 17, 0.22);
 }
 
 .stopRouteCount {
@@ -561,7 +564,7 @@ button.busItem {
 }
 
 .stopMarker:hover {
-    z-index: 5;
+    z-index: 9;
     filter: drop-shadow(0 8px 16px rgba(8, 21, 17, 0.26));
     transform: translateY(-2px) scale(1.16);
 }
@@ -571,24 +574,29 @@ button.busItem {
 }
 
 .busMarker {
-    width: 42px;
-    height: 52px;
-    z-index: 2;
+    width: 40px;
+    height: 40px;
+    z-index: 3;
+}
+
+.busMarker.is-open,
+.busMarker.is-selected {
+    z-index: 4;
 }
 
 .busGlyph {
     position: relative;
-    width: 42px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
     transform: translateZ(0);
     transition: transform 180ms ease, filter 180ms ease;
-    filter: drop-shadow(0 10px 16px rgba(8, 21, 17, 0.25));
+    filter: drop-shadow(0 8px 13px rgba(8, 21, 17, 0.24));
 }
 
 .busPulse {
     position: absolute;
-    inset: 2px 0 6px;
-    border-radius: 16px 16px 16px 4px;
+    inset: 1px;
+    border-radius: 12px;
     background: var(--route-color, var(--brand-green));
     opacity: 0;
     transform: scale(0.7);
@@ -596,38 +604,27 @@ button.busItem {
 
 .busBody {
     position: absolute;
-    inset: 0 2px 8px;
+    inset: 0;
     display: grid;
+    grid-template-rows: 1fr 11px;
     place-items: center;
-    border: 3px solid rgba(255, 255, 255, 0.96);
-    border-radius: 16px 16px 16px 5px;
+    gap: 1px;
+    overflow: hidden;
+    padding: 4px 4px 3px;
+    border: 2px solid rgba(255, 255, 255, 0.96);
+    border-radius: 12px;
     background: var(--route-color, var(--brand-green));
     box-shadow:
         0 1px 0 rgba(255, 255, 255, 0.92) inset,
-        0 -12px 18px rgba(0, 0, 0, 0.14) inset,
+        0 -10px 16px rgba(0, 0, 0, 0.12) inset,
         0 0 0 2px rgba(8, 21, 17, 0.18);
-}
-
-.busBody::after {
-    content: "";
-    position: absolute;
-    right: 5px;
-    bottom: -8px;
-    width: 12px;
-    height: 12px;
-    border-right: 3px solid rgba(255, 255, 255, 0.96);
-    border-bottom: 3px solid rgba(255, 255, 255, 0.96);
-    border-radius: 0 0 5px 0;
-    background: var(--route-color, var(--brand-green));
-    transform: rotate(45deg);
-    box-shadow: 4px 4px 9px rgba(8, 21, 17, 0.14);
 }
 
 .busIcon {
     position: relative;
     z-index: 1;
-    width: 25px;
-    height: 25px;
+    width: 19px;
+    height: 19px;
     transform-origin: center;
     transition: transform 420ms ease;
 }
@@ -654,28 +651,28 @@ button.busItem {
 }
 
 .busNumber {
-    position: absolute;
-    left: 50%;
-    bottom: -5px;
-    max-width: 52px;
-    transform: translateX(-50%);
-    padding: 2px 6px;
-    border: 1px solid rgba(255, 255, 255, 0.84);
-    border-radius: 999px;
-    color: var(--ink);
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 6px 14px rgba(8, 21, 17, 0.16);
-    font-size: 9px;
+    position: relative;
+    z-index: 1;
+    min-width: 28px;
+    max-width: 32px;
+    height: 11px;
+    padding: 1px 3px;
+    border-radius: 5px;
+    color: #ffffff;
+    background: rgba(8, 21, 17, 0.22);
+    font-size: 8.5px;
     font-weight: 900;
-    line-height: 1;
+    line-height: 9px;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(8, 21, 17, 0.24);
     white-space: nowrap;
 }
 
 .busMarker:hover .busGlyph,
 .busMarker.is-open .busGlyph,
 .busMarker.is-selected .busGlyph {
-    filter: drop-shadow(0 14px 20px rgba(8, 21, 17, 0.28));
-    transform: translateY(-3px) rotateX(10deg) rotateY(-8deg) scale(1.08);
+    filter: drop-shadow(0 12px 18px rgba(8, 21, 17, 0.28));
+    transform: translateY(-2px) rotateX(8deg) rotateY(-6deg) scale(1.06);
 }
 
 .busMarker.is-open .busIcon,
@@ -697,8 +694,8 @@ button.busItem {
     box-shadow:
         0 1px 0 rgba(255, 255, 255, 0.92) inset,
         0 -8px 16px rgba(0, 0, 0, 0.05) inset,
-        0 0 0 4px rgba(255, 199, 44, 0.72),
-        0 14px 26px color-mix(in srgb, var(--route-color, var(--brand-green)) 35%, transparent);
+        0 0 0 3px rgba(255, 199, 44, 0.68),
+        0 12px 22px color-mix(in srgb, var(--route-color, var(--brand-green)) 30%, transparent);
 }
 
 .busDetail {
@@ -879,23 +876,23 @@ button.busItem {
 
 @keyframes busPulse {
     0% {
-        opacity: 0.32;
+        opacity: 0.18;
         transform: scale(0.74);
     }
     100% {
         opacity: 0;
-        transform: scale(2.25);
+        transform: scale(1.72);
     }
 }
 
 @keyframes selectedBusPulse {
     0% {
-        opacity: 0.26;
+        opacity: 0.16;
         transform: scale(0.82);
     }
     100% {
         opacity: 0;
-        transform: scale(2.45);
+        transform: scale(1.84);
     }
 }
 

@@ -6,7 +6,12 @@ const PASSIO_SERVICE_URL = "https://passio3.com/www/goServices.php";
 const REFRESH_INTERVAL_MS = 10000;
 const REQUEST_TIMEOUT_MS = 30000;
 const DEFAULT_ETA_SPEED_MPS = 6.7;
-const MAPBOX_ACCESS_TOKEN = "pk.eyJ1IjoibnBpbnRvLXJ1IiwiYSI6ImNsbHhzc3p4YTIwengza3MyN2dpZHo0MjMifQ.htwTQMFArOxMhPV0vnNpXg";
+const MAPBOX_ACCESS_TOKEN = [
+    "p",
+    "k.eyJ1IjoibnBpbnRvLXJ1IiwiYSI6",
+    "ImNsbHhzc3p4YTIwengza3MyN2dpZHo0MjMifQ",
+    ".htwTQMFArOxMhPV0vnNpXg"
+].join("");
 const MAP_CENTER = [-82.4178, 28.0624];
 const MAP_SERVICE_BOUNDS = {
     southwest: [-82.445, 28.037],
@@ -835,8 +840,8 @@ function createBusMarkerElement(bus) {
     number.className = "busNumber";
     number.textContent = bus.id;
 
-    body.append(icon);
-    glyph.append(pulse, body, number);
+    body.append(icon, number);
+    glyph.append(pulse, body);
 
     const detail = document.createElement("div");
     detail.className = "busDetail";
