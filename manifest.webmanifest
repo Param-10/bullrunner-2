@@ -1,12 +1,12 @@
 {
-    "theme_color": "#006747",
-    "background_color": "#FFCC00",
+    "theme_color": "#00543c",
+    "background_color": "#f6f8f6",
     "display": "fullscreen",
-    "scope": "/",
-    "start_url": "/",
-    "name": "Bulls-GO: USF Tampa Unofficial Bus App",
-    "short_name": "Bulls-Go",
-    "description": "Re-packaging the data from the official Passio servers for the USF Community",
+    "scope": "/bullrunner-2/",
+    "start_url": "/bullrunner-2/",
+    "name": "Bulls Go",
+    "short_name": "Bulls Go",
+    "description": "Live USF Bull Runner routes, stops, buses, and alerts powered by Passio data.",
     "icons": [{
             "src": "icon-192x192.png",
             "sizes": "192x192",
@@ -28,5 +28,5 @@
             "type": "image/png"
         }
     ],
-    "theme_color_light": "#FFFFFF"
+    "theme_color_light": "#ffffff"
 }

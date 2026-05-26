@@ -1,56 +1,57 @@
-# BullRunner Web Application
+# Bulls Go
 
-BullRunner is a web application designed to help users track university buses in real-time. The application displays the closest bus stops, provides real-time bus locations, and offers navigation to the selected bus stop. This project focuses on parsing API calls from the PassioGo API.
+Bulls Go is a lightweight web app for USF students who need live Bull Runner route, stop, bus, and service alert information. It is hosted as a static GitHub Pages app and reads current data from Passio.
 
 ## Features
 
-- Display of user's current location on a map
-- Search and display of nearest bus stops
-- Real-time bus tracking
-- Navigation to bus stops
-- Notifications for bus arrival
-- User settings and preferences
-- Show Live Bus Location and Routes
+- Map-first view of USF Bull Runner stops and buses
+- Current route colors from Passio route and vehicle data
+- Searchable stops, buses, routes, and service alerts
+- Route overlays with live bus filtering
+- Estimated arrivals from live bus position and route shape
+- Responsive desktop and mobile panels
 
 ## Tech Stack
 
-### Frontend
 - HTML5
 - CSS3
-- JavaScript
-- jQuery
-- Mapbox API
-- Axios
+- JavaScript with browser fetch
+- Mapbox GL JS
+- Local route distance helpers for estimated arrivals
+- Passio API data
 
 ## Setup
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/your-username/bullrunner.git
+    git clone https://github.com/Param-10/bullrunner-2.git
     ```
 
 2. Navigate to the project directory:
     ```bash
-    cd bullrunner
+    cd bullrunner-2
     ```
 
-3. Open `index.html` in your preferred browser.
+3. Serve the folder locally, then open the local URL:
+    ```bash
+    python3 -m http.server 4173
+    ```
 
 ## Usage
 
-- The application will fetch data from the PassioGo API to display real-time bus locations and routes.
-- Users can view their current location, nearest bus stops, and navigate to selected bus stops.
-- The app will notify users of bus arrivals.
+- Open Routes to draw or hide route lines.
+- Open Stops to search campus stops and view estimated arrivals.
+- Open Buses to jump to a live vehicle.
+- Open Alerts to read current service messages.
 
 ## API Parsing
 
 The core of this application revolves around parsing API calls from the PassioGo API. Here's an overview of the main API endpoints and how they're handled:
 
-- `/routes`: Fetches all available bus routes
-- `/stops`: Retrieves all bus stops
-- `/vehicles`: Gets real-time locations of all buses
-
-The `package-parse.js` file contains the main logic for parsing these API responses and transforming the data into a format usable by the frontend.
+- `mapGetData.php?getRoutes=1`: route names, ids, colors, and service flags
+- `mapGetData.php?getStops=1`: stops, route stop order, and route geometry
+- `mapGetData.php?getBuses=1`: live bus positions, route assignment, capacity, and update time
+- `goServices.php?getAlertMessages=1`: current service alerts
 
 ## Contributing
 
@@ -63,8 +64,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Contact
 
-For any inquiries, please contact [ubullrunner@gmail.com].# bullrunner-2
-
-## Update
-
-This update adds a note at the beginning of the README to inform readers that the project is under active development. It also includes a new "Development Status" section near the end of the document, providing more context about the ongoing development and inviting community involvement. 
+For any inquiries, please contact [ubullrunner@gmail.com].

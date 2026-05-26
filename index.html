@@ -1,153 +1,152 @@
-<html>
+<!doctype html>
+<html lang="en">
 
 <head>
-    <title>Bulls-GO</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#00543c">
+    <meta name="description" content="A clean live map for USF Bull Runner buses, stops, routes, and service alerts.">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://api.mapbox.com; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; connect-src 'self' https://passio3.com https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com; worker-src blob:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
+    <title>Bulls Go</title>
     <link rel="manifest" href="manifest.webmanifest">
-    <!--- boilerplate -->
-    <!-- Link to Google Fonts for Montserrat and Open Sans -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans">
-    <!-- Link to Turf.js library -->
-    <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
-    <!-- Link to jQuery library -->
-    <script src="https://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
-    <!-- Link to local stylesheet -->
-    <link id='stylesheet' href="style.css" rel="stylesheet">
-    <!--- Google Maps API -->
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js'></script>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css' rel='stylesheet' />
-    <!-- Meta tag to set the viewport for responsive design -->
-    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
+    <link rel="icon" href="favicon.png">
+    <link id="stylesheet" href="style.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
 </head>
 
 <body>
+    <main id="app" aria-label="USF Bull Runner live transit map">
+        <div id="map" aria-label="Map of USF Bull Runner buses and stops"></div>
 
-    <!-- Popup for loading status -->
-    <div id="status" class="popup" style="z-index: 10">
-        <h2 class="popupTitle">Loading</h2>
-    </div>
+        <header id="appTopbar" aria-label="Application status">
+            <div class="brandLockup">
+                <div class="brandMark" aria-hidden="true">BG</div>
+                <div>
+                    <p class="brandName">Bulls Go</p>
+                    <p class="brandSubline">USF Bull Runner live map</p>
+                </div>
+            </div>
+            <div class="systemStatus" aria-live="polite">
+                <span id="routeCount">Routes loading</span>
+                <span id="busCount">Buses loading</span>
+                <span id="lastUpdated">Connecting</span>
+            </div>
+        </header>
 
-    <!--- Google Maps container -->
-    <div id='map' style='width: 100%; height: 100%;'></div>
+        <nav id="controls" aria-label="Transit views">
+            <button id="stopsButton" class="SVGcontainer" type="button" data-panel-target="stopsList" aria-controls="stopsList">
+                <img src="assets/mapPin.svg" class="SVGicon" alt="">
+                <span>Stops</span>
+            </button>
+            <button id="busesButton" class="SVGcontainer" type="button" data-panel-target="busesList" aria-controls="busesList">
+                <img src="assets/buses.svg" class="SVGicon" alt="">
+                <span>Buses</span>
+            </button>
+            <button id="routesButton" class="SVGcontainer" type="button" data-panel-target="routesList" aria-controls="routesList">
+                <img src="assets/routes.svg" class="SVGicon" alt="">
+                <span>Routes</span>
+            </button>
+            <button id="alertsButton" class="SVGcontainer" type="button" data-panel-target="alertsList" aria-controls="alertsList">
+                <img src="assets/bell.svg" class="SVGicon" alt="">
+                <span>Alerts</span>
+                <span id="alertCount" class="badge" hidden>0</span>
+            </button>
+        </nav>
 
-    <!--- mapbox -->
-    <div id='map' style='width: 100%; height: 100%;'></div>
+        <section id="status" class="popup statusPanel" aria-live="assertive">
+            <div class="statusPulse" aria-hidden="true"></div>
+            <div>
+                <h2 class="popupTitle">Loading Bull Runner data</h2>
+                <p class="panelCopy">Connecting to Passio for current routes, stops, buses, and service alerts.</p>
+            </div>
+        </section>
 
-    <script>
-        mapboxgl.accessToken = 'pk.eyJ1IjoibnBpbnRvLXJ1IiwiYSI6ImNsbHhzc3p4YTIwengza3MyN2dpZHo0MjMifQ.htwTQMFArOxMhPV0vnNpXg';
-        const map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/outdoors-v12',
-            maxBounds: new mapboxgl.LngLatBounds(
-                [-82.5, 27.9], // Southwest coordinates (lng, lat)
-                [-82.3, 28.2] // Northeast coordinates (lng, lat)
-            ),
-            zoom: 13.5,
-            center: [-82.41384, 28.06485] // [lng, lat]
-        });
+        <section id="routesList" class="popup sheetPanel" aria-label="Routes" hidden>
+            <div class="panelHeader">
+                <div>
+                    <p class="panelEyebrow">Routes</p>
+                    <h2 class="popupTitle">Choose visible routes</h2>
+                </div>
+                <button class="x" type="button" data-close-panel aria-label="Close routes panel">
+                    <img src="assets/x.svg" class="SVGicon" alt="">
+                </button>
+            </div>
+            <p class="panelCopy">Selected routes draw on the map. If nothing is selected, all live buses stay visible.</p>
+            <div class="popupList" role="list"></div>
+        </section>
 
-        // Add the Geolocate control to the map
-        map.addControl(
-            new mapboxgl.GeolocateControl({
-                positionOptions: {
-                    enableHighAccuracy: true
-                },
-                trackUserLocation: true,
-                showUserHeading: true,
-            }), 'bottom-left'
-        );
+        <section id="stopsList" class="popup sheetPanel" aria-label="Stops" hidden>
+            <div class="panelHeader">
+                <div>
+                    <p class="panelEyebrow">Stops</p>
+                    <h2 class="popupTitle">Find a stop</h2>
+                </div>
+                <button class="x" type="button" data-close-panel aria-label="Close stops panel">
+                    <img src="assets/x.svg" class="SVGicon" alt="">
+                </button>
+            </div>
+            <label class="searchLabel" for="stopSearch">Search by stop name or route</label>
+            <input type="search" placeholder="Marshall Student Center" id="stopSearch" autocomplete="off">
+            <div class="popupList withSearch" role="list"></div>
+        </section>
 
-        // Add zoom and rotation controls to the map
-        map.addControl(new mapboxgl.NavigationControl(), 'bottom-right'); // You can change the position to suit your needs
-    </script>
+        <section id="busesList" class="popup sheetPanel" aria-label="Buses" hidden>
+            <div class="panelHeader">
+                <div>
+                    <p class="panelEyebrow">Buses</p>
+                    <h2 class="popupTitle">Live vehicles</h2>
+                </div>
+                <button class="x" type="button" data-close-panel aria-label="Close buses panel">
+                    <img src="assets/x.svg" class="SVGicon" alt="">
+                </button>
+            </div>
+            <label class="searchLabel" for="busSearch">Search by bus number or route</label>
+            <input type="search" placeholder="Red, 1802, Brown" id="busSearch" autocomplete="off">
+            <div class="popupList withSearch" role="list"></div>
+        </section>
 
+        <section id="alertsList" class="popup sheetPanel" aria-label="Service alerts" hidden>
+            <div class="panelHeader">
+                <div>
+                    <p class="panelEyebrow">Alerts</p>
+                    <h2 class="popupTitle">Service updates</h2>
+                </div>
+                <button class="x" type="button" data-close-panel aria-label="Close alerts panel">
+                    <img src="assets/x.svg" class="SVGicon" alt="">
+                </button>
+            </div>
+            <div class="popupList" role="list"></div>
+        </section>
 
-    <!--- Main logo -->
-    <div id='logo' style="font-family: Montserrat;">
-        BULLS - GO : A Personal PassioGo Client
-    </div>
+        <section id="stopContainer" class="popup sheetPanel stopPanel" aria-label="Stop details" hidden>
+            <div class="panelHeader">
+                <div>
+                    <p class="panelEyebrow">Stop</p>
+                    <h2 class="popupTitle"></h2>
+                </div>
+                <button class="x" type="button" data-close-panel aria-label="Close stop details">
+                    <img src="assets/x.svg" class="SVGicon" alt="">
+                </button>
+            </div>
+            <p class="panelCopy">Arrival times are estimated from live bus position and route shape when Passio does not provide predictions.</p>
+            <div class="popupList" role="list"></div>
+        </section>
 
-    <!--- Control buttons for stops, buses, routes, and alerts -->
-    <div id='controls'>
-        <div id='stopsButton' class='SVGcontainer'>
-            <img src="assets/mapPin.svg" class='SVGicon'></img>
-        </div>
-        <div id='busesButton' class='SVGcontainer'>
-            <img src="assets/buses.svg" class='SVGicon'></img>
-        </div>
-        <div id='routesButton' class='SVGcontainer'>
-            <img src="assets/routes.svg" class='SVGicon'></img>
-        </div>
-        <div id='alertsButton' class='SVGcontainer'>
-            <img src="assets/bell.svg" class='SVGicon'></img>
-        </div>
-    </div>
+        <aside id="developmentNotice" class="development-notice" aria-live="polite">
+            Live data by Passio. Refresh if a bus has not updated recently.
+        </aside>
 
-    <!--- Popups for routes, stops, buses, and alerts -->
-    <div id='routesList' class='popup' style='display: none;'>
-        <h3 class='popupTitle'>Routes</h3>
-        </br>
-        <div class='x' onclick='$("#routesList").hide()'>
-            <img src="assets/x.svg" class="SVGicon"></img>
-        </div>
-        <div class='popupList'>
-            <!--- routes to fill -->
-        </div>
-    </div>
+        <aside id="routeLegend" class="legendPanel" aria-label="Route color legend">
+            <div class="legendHeader">
+                <span>Route colors</span>
+                <span>Tap to filter</span>
+            </div>
+            <div class="legendList"></div>
+        </aside>
+    </main>
 
-    <div id='stopsList' class='popup' style='display: none;'>
-        <h3 class='popupTitle'>Stops</h3>
-        </br>
-        <input type="text" placeholder="Stop Name" id="stopSearch">
-        <div class='x' onclick='$("#stopsList").hide()'>
-            <img src="assets/x.svg" class="SVGicon"></img>
-        </div>
-        <div class='popupList withSearch'>
-            <!--- stops to fill -->
-        </div>
-    </div>
-
-    <div id='busesList' class='popup' style='display: none;'>
-        <h3 class='popupTitle'>Buses</h3>
-        </br>
-        <input type="text" placeholder="Bus Number" id="busSearch">
-        <div class='x' onclick='$("#busesList").hide()'>
-            <img src="assets/x.svg" class="SVGicon"></img>
-        </div>
-        <div class='popupList withSearch'>
-            <!--- buses to fill -->
-        </div>
-    </div>
-
-    <div id='alertsList' class='popup' style='display: none;'>
-        <div class='x' onclick='$("#alertsList").hide()'>
-            <img src="assets/x.svg" class="SVGicon"></img>
-        </div>
-        <h3 class='popupTitle'>Alerts</h3>
-        </br>
-        <div class='popupList'></div>
-        <!--- alerts to fill -->
-    </div>
-    </div>
-
-    <div id="stopContainer" class="popup poppy" style="display: none;">
-        <h3 class='popupTitle'></h3>
-        </br>
-        <div class='x' onclick='$("#stopContainer").hide()'>
-            <img src="assets/x.svg" class="SVGicon"></img>
-        </div>
-        <div class='popupList'>
-            <!--- incoming buses to fill -->
-        </div>
-    </div>
-    <div id="developmentNotice" class="development-notice">
-        This site is still under development. We are working on it.
-        There may be bugs and incomplete features. Thank you for your patience.
-        You will have to navigate to the Routes tab to see the routes and the buses currently working on that route.
-        Please refresh the site if there are any issues!
-    </div>
-
-    <!-- Link to local JavaScript file -->
     <script src="index.js" type="text/javascript"></script>
 </body>
 
